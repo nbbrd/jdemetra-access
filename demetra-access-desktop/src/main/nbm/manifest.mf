@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+OpenIDE-Module-Localizing-Bundle: be/nbb/demetra/access/Bundle.properties
+OpenIDE-Module-Name: Demetra - Access
+OpenIDE-Module-Display-Category: IO

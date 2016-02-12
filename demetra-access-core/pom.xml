@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>be.nbb.demetra</groupId>
+    <artifactId>demetra-access-core</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    
+    <name>Demetra - Access - Core</name>
+    <description>A pure java library for reading time series from MS Access databases.</description>
+    <organization>
+        <name>National Bank of Belgium</name>
+    </organization>
+    <licenses>
+        <license>
+            <name>European Union Public Licence (EUPL)</name>
+            <url>https://joinup.ec.europa.eu/software/page/eupl/licence-eupl</url>
+        </license>
+    </licenses>
+    
+    <properties>
+        <!-- build -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jdk.version>1.7</jdk.version>
+        <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
+        <!-- dependencies -->
+        <demetra.version>2.0.0</demetra.version>
+        <jackcess.version>2.1.2</jackcess.version>
+        <netbeans.version>RELEASE801</netbeans.version>
+        <assertj-core.version>2.2.0</assertj-core.version>
+    </properties>
+        
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>eu.europa.ec.joinup.sat</groupId>
+                <artifactId>demetra-parent</artifactId>
+                <version>${demetra.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>eu.europa.ec.joinup.sat</groupId>
+                <artifactId>demetra-utils</artifactId>
+                <version>${demetra.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>     
+                <groupId>com.healthmarketscience.jackcess</groupId>     
+                <artifactId>jackcess</artifactId>     
+                <version>${jackcess.version}</version> 
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency> 
+        </dependencies>
+    </dependencyManagement>
+    
+    <dependencies>
+        <!-- compile and runtime -->
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-openide-util-lookup</artifactId>
+            <version>${netbeans.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.europa.ec.joinup.sat</groupId>
+            <artifactId>demetra-jdbc</artifactId>
+        </dependency>
+        <dependency>     
+            <groupId>com.healthmarketscience.jackcess</groupId>     
+            <artifactId>jackcess</artifactId>     
+        </dependency> 
+        <!-- runtime only -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- test only -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj-core.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <repositories>
+        <repository>
+            <id>netbeans</id>
+            <url>http://bits.netbeans.org/maven2/</url>
+        </repository>        
+        <repository>
+            <id>joinup-releases</id>
+            <url>https://joinup.ec.europa.eu/nexus/content/repositories/releases/</url>
+        </repository>
+    </repositories>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>    
+</project>
