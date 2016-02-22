@@ -9,6 +9,7 @@
 
     <name>Demetra - Access - Desktop</name>
     <description>A pure java library for reading time series from MS Access databases.</description>
+
     <organization>
         <name>National Bank of Belgium</name>
     </organization>
@@ -101,13 +102,12 @@
 
     <repositories>
         <repository>
+            <id>netbeans</id>
+            <url>http://bits.netbeans.org/maven2/</url>
+        </repository>        
+        <repository>
             <id>joinup-releases</id>
             <url>https://joinup.ec.europa.eu/nexus/content/repositories/releases/</url>
-        </repository>
-        <repository> 
-            <id>netbeans</id> 
-            <name>NetBeans</name> 
-            <url>http://bits.netbeans.org/maven2/</url> 
         </repository>
     </repositories>
 
