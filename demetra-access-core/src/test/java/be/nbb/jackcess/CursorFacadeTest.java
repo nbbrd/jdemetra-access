@@ -36,6 +36,8 @@ import com.healthmarketscience.jackcess.DataType;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
 import com.healthmarketscience.jackcess.TableBuilder;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
@@ -61,21 +63,22 @@ public class CursorFacadeTest {
     public void testMoveToNextRow() throws IOException {
         try (Database db = open(file)) {
             Table table = db.getTable("MyTable");
+            Collection<String> columnNames = Arrays.asList("Col0", "Col1");
 
-            List<RowId> all = toRowIds(CursorFacade.basic(table));
+            List<RowId> all = toRowIds(CursorFacade.basic(table, columnNames));
 
             assertThat(all).isSorted().hasSize(10);
 
-            assertThat(toRowIds(CursorFacade.range(table, Range.<RowId>all())))
+            assertThat(toRowIds(CursorFacade.range(table, columnNames, Range.<RowId>all())))
                     .containsExactlyElementsOf(all);
 
-            assertThat(toRowIds(CursorFacade.range(table, Range.closed(all.get(0), all.get(0)))))
+            assertThat(toRowIds(CursorFacade.range(table, columnNames, Range.closed(all.get(0), all.get(0)))))
                     .containsExactly(all.get(0));
 
-            assertThat(toRowIds(CursorFacade.range(table, Range.closed(all.get(9), all.get(9)))))
+            assertThat(toRowIds(CursorFacade.range(table, columnNames, Range.closed(all.get(9), all.get(9)))))
                     .containsExactly(all.get(9));
 
-            assertThat(toRowIds(CursorFacade.range(table, Range.closed(all.get(4), all.get(6)))))
+            assertThat(toRowIds(CursorFacade.range(table, columnNames, Range.closed(all.get(4), all.get(6)))))
                     .containsExactly(all.get(4), all.get(5), all.get(6));
         }
     }
@@ -84,7 +87,8 @@ public class CursorFacadeTest {
     public void testGetCurrentRowValue() throws IOException {
         try (Database db = open(file)) {
             Table table = db.getTable("MyTable");
-            CursorFacade cursor = CursorFacade.basic(table);
+            Collection<String> columnNames = Arrays.asList("Col0", "Col1");
+            CursorFacade cursor = CursorFacade.basic(table, columnNames);
             int i = 0;
             while (cursor.moveToNextRow()) {
                 assertEquals(i + "x0", cursor.getCurrentRowValue(table.getColumn("Col0")));
@@ -98,7 +102,8 @@ public class CursorFacadeTest {
     public void testGetRowId() throws IOException {
         try (Database db = open(file)) {
             Table table = db.getTable("MyTable");
-            List<RowId> rowIds = toRowIds(CursorFacade.basic(table));
+            Collection<String> columnNames = Arrays.asList("Col0", "Col1");
+            List<RowId> rowIds = toRowIds(CursorFacade.basic(table, columnNames));
             assertThat(new TreeSet<>(rowIds)).containsExactlyElementsOf(rowIds);
         }
     }
@@ -107,7 +112,8 @@ public class CursorFacadeTest {
     public void testMoveBefore() throws IOException {
         try (Database db = open(file)) {
             Table table = db.getTable("MyTable");
-            CursorFacade cursor = CursorFacade.basic(table);
+            Collection<String> columnNames = Arrays.asList("Col0", "Col1");
+            CursorFacade cursor = CursorFacade.basic(table, columnNames);
             cursor.moveToNextRow();
             RowId first = cursor.getRowId();
             cursor.moveToNextRow();
@@ -121,15 +127,16 @@ public class CursorFacadeTest {
     public void testWithFilter() throws IOException {
         try (Database db = open(file)) {
             Table table = db.getTable("MyTable");
+            Collection<String> columnNames = Arrays.asList("Col0", "Col1");
 
             SortedMap<Column, String> f1 = ImmutableSortedMap.of();
-            assertEquals(10, count(CursorFacade.basic(table).withFilter(f1)));
+            assertEquals(10, count(CursorFacade.basic(table, columnNames).withFilter(f1)));
 
             SortedMap<Column, String> f2 = ImmutableSortedMap.<Column, String>orderedBy(BY_COLUMN_INDEX).put(table.getColumn("Col1"), "4x1").build();
-            assertEquals(1, count(CursorFacade.basic(table).withFilter(f2)));
+            assertEquals(1, count(CursorFacade.basic(table, columnNames).withFilter(f2)));
 
             SortedMap<Column, String> f3 = ImmutableSortedMap.<Column, String>orderedBy(BY_COLUMN_INDEX).put(table.getColumn("Col1"), "hello").build();
-            assertEquals(0, count(CursorFacade.basic(table).withFilter(f3)));
+            assertEquals(0, count(CursorFacade.basic(table, columnNames).withFilter(f3)));
         }
     }
 

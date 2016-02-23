@@ -21,9 +21,11 @@ import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.Column;
 import com.healthmarketscience.jackcess.Cursor;
 import com.healthmarketscience.jackcess.CursorBuilder;
+import com.healthmarketscience.jackcess.Row;
 import com.healthmarketscience.jackcess.RowId;
 import com.healthmarketscience.jackcess.Table;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.SortedMap;
 import javax.annotation.Nonnull;
@@ -51,13 +53,13 @@ public abstract class CursorFacade {
     }
 
     @Nonnull
-    public static CursorFacade basic(@Nonnull Table table) throws IOException {
-        return new BasicCursor(CursorBuilder.createCursor(table));
+    public static CursorFacade basic(@Nonnull Table table, @Nonnull Collection<String> columnNames) throws IOException {
+        return new BasicCursor(CursorBuilder.createCursor(table), columnNames);
     }
 
     @Nonnull
-    public static CursorFacade range(@Nonnull Table table, @Nonnull Range<RowId> range) throws IOException {
-        CursorFacade basic = basic(table);
+    public static CursorFacade range(@Nonnull Table table, @Nonnull Collection<String> columnNames, @Nonnull Range<RowId> range) throws IOException {
+        CursorFacade basic = basic(table, columnNames);
         if (range.hasLowerBound()) {
             basic.moveBefore(range.lowerEndpoint());
         }
@@ -133,24 +135,28 @@ public abstract class CursorFacade {
     private static final class BasicCursor extends CursorFacade {
 
         private final Cursor internalCursor;
+        private final Collection<String> columnNames;
+        private Row currentRow;
 
-        private BasicCursor(Cursor cursor) {
+        private BasicCursor(Cursor cursor, Collection<String> columnNames) {
             this.internalCursor = cursor;
+            this.columnNames = columnNames;
+            this.currentRow = null;
         }
 
         @Override
         public boolean moveToNextRow() throws IOException {
-            return internalCursor.moveToNextRow();
+            return (currentRow = internalCursor.getNextRow(columnNames)) != null;
         }
 
         @Override
         public Object getCurrentRowValue(Column column) throws IOException {
-            return internalCursor.getCurrentRowValue(column);
+            return currentRow.get(column.getName());
         }
 
         @Override
         public RowId getRowId() throws IOException {
-            return internalCursor.getSavepoint().getCurrentPosition().getRowId();
+            return currentRow.getId();
         }
 
         @Override
