@@ -37,10 +37,13 @@ import org.slf4j.LoggerFactory;
 public final class JackcessProvider extends DbProvider<JackcessBean> implements IFileLoader {
 
     public static final String NAME = "ACCESS", VERSION = "20130226";
+
+    private final JackcessFileFilter fileFilter;
     private ImmutableList<File> paths;
 
     public JackcessProvider() {
         super(LoggerFactory.getLogger(JackcessProvider.class), NAME, TsAsyncMode.Once);
+        this.fileFilter = new JackcessFileFilter();
         this.paths = ImmutableList.of();
     }
 
@@ -71,13 +74,12 @@ public final class JackcessProvider extends DbProvider<JackcessBean> implements 
 
     @Override
     public String getFileDescription() {
-        return "Access file";
+        return fileFilter.getDescription();
     }
 
     @Override
     public boolean accept(File pathname) {
-        String tmp = pathname.getPath().toLowerCase();
-        return tmp.endsWith(".mdb") || tmp.endsWith(".accdb");
+        return fileFilter.accept(pathname);
     }
 
     @Override
