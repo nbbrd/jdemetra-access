@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import ec.tss.tsproviders.db.DbSetId;
 import ec.tstoolkit.design.IBuilder;
 import java.util.Iterator;
 import java.util.List;
@@ -146,10 +145,8 @@ public final class DbBasicSelect {
         }
 
         @Nonnull
-        public Builder filter(DbSetId ref) {
-            for (int i = 0; i < ref.getLevel(); i++) {
-                this.filterItems.put(ref.getColumn(i), ref.getValue(i));
-            }
+        public Builder filter(Map<String, String> filter) {
+            this.filterItems.putAll(filter);
             return this;
         }
 

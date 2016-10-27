@@ -4,7 +4,7 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-access-core</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
     <packaging>jar</packaging>
     
     <name>Demetra - Access - Core</name>
@@ -26,8 +26,8 @@
         <jdk.version>1.7</jdk.version>
         <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
         <!-- dependencies -->
-        <demetra.version>2.0.0</demetra.version>
-        <jackcess.version>2.1.2</jackcess.version>
+        <demetra.version>2.1.0</demetra.version>
+        <jackcess.version>2.1.4</jackcess.version>
         <netbeans.version>RELEASE801</netbeans.version>
         <assertj-core.version>2.2.0</assertj-core.version>
     </properties>

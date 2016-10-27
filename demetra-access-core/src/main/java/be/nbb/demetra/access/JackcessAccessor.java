@@ -34,7 +34,9 @@ import ec.tstoolkit.design.VisibleForTesting;
 import ec.tstoolkit.utilities.LastModifiedFileCache;
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +66,7 @@ final class JackcessAccessor extends DbAccessor.Commander<JackcessBean> {
                         .from(dbBean.getTableName())
                         .distinct(true)
                         .select(ref.selectColumns())
-                        .filter(ref)
+                        .filter(toFilter(ref))
                         .orderBy(ref.selectColumns())
                         .build();
             }
@@ -98,7 +100,7 @@ final class JackcessAccessor extends DbAccessor.Commander<JackcessBean> {
                 DbBasicSelect.Builder result = DbBasicSelect
                         .from(dbBean.getTableName())
                         .select(ref.selectColumns()).select(dbBean.getPeriodColumn(), dbBean.getValueColumn())
-                        .filter(ref)
+                        .filter(toFilter(ref))
                         .orderBy(ref.selectColumns());
                 if (!dbBean.getVersionColumn().isEmpty()) {
                     result.orderBy(dbBean.getPeriodColumn(), dbBean.getVersionColumn());
@@ -137,7 +139,7 @@ final class JackcessAccessor extends DbAccessor.Commander<JackcessBean> {
             protected DbBasicSelect getQuery() {
                 DbBasicSelect.Builder result = DbBasicSelect.from(dbBean.getTableName())
                         .select(dbBean.getPeriodColumn(), dbBean.getValueColumn())
-                        .filter(ref);
+                        .filter(toFilter(ref));
                 if (!dbBean.getVersionColumn().isEmpty()) {
                     result.orderBy(dbBean.getPeriodColumn(), dbBean.getVersionColumn());
                 }
@@ -179,7 +181,7 @@ final class JackcessAccessor extends DbAccessor.Commander<JackcessBean> {
                         .from(dbBean.getTableName())
                         .distinct(true)
                         .select(column)
-                        .filter(ref)
+                        .filter(toFilter(ref))
                         .orderBy(column)
                         .build();
             }
@@ -241,5 +243,13 @@ final class JackcessAccessor extends DbAccessor.Commander<JackcessBean> {
                 }
             }
         }
+    }
+
+    private static Map<String, String> toFilter(DbSetId id) {
+        Map<String, String> result = new HashMap<>();
+        for (int i = 0; i < id.getLevel(); i++) {
+            result.put(id.getColumn(i), id.getValue(i));
+        }
+        return result;
     }
 }

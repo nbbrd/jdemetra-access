@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import static be.nbb.jackcess.JackcessColumnComparator.BY_COLUMN_INDEX;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
+import java.util.HashSet;
 
 /**
  *
@@ -73,7 +74,7 @@ public final class JackcessStatement implements Closeable {
         LOGGER.debug("Query : '{}'", query);
 
         Stopwatch sw = Stopwatch.createStarted();
-        CheckedIterator<Object[], IOException> rows = new Adapter(CursorFacade.range(table, range).withFilter(filter), dataColumns);
+        CheckedIterator<Object[], IOException> rows = new Adapter(CursorFacade.range(table, toColumnNames(query), range).withFilter(filter), dataColumns);
         LOGGER.debug("Iterator done in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
         ToIndex toIndex = new ToIndex(dataColumns);
@@ -111,6 +112,14 @@ public final class JackcessStatement implements Closeable {
         for (Iterable<Column> o : list) {
             Iterables.addAll(result, o);
         }
+        return result;
+    }
+
+    private static Collection<String> toColumnNames(DbBasicSelect query) {
+        Collection<String> result = new HashSet<>();
+        result.addAll(query.getSelectColumns());
+        result.addAll(query.getOrderColumns());
+        result.addAll(query.getFilterItems().keySet());
         return result;
     }
 
