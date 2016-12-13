@@ -3,6 +3,16 @@ jdk:
   - openjdk7
   - oraclejdk7
   - oraclejdk8
+
 cache:
   directories:
     - $HOME/.m2
+
+deploy:
+  provider: script
+  script: mvn deploy -Dmaven.test.skip -s settings.xml
+  skip_cleanup: true
+  on:
+    branch: develop
+    jdk: openjdk7
+    condition: $TRAVIS_PULL_REQUEST = "false"
