@@ -9,10 +9,12 @@
     
     <name>Demetra - Access - Core</name>
     <description>A pure java library for reading time series from MS Access databases.</description>
+    <url>https://github.com/nbbrd/jdemetra-access</url>
     
     <organization>
         <name>National Bank of Belgium</name>
     </organization>
+
     <licenses>
         <license>
             <name>European Union Public Licence (EUPL)</name>
@@ -29,9 +31,36 @@
         <demetra.version>2.1.0</demetra.version>
         <jackcess.version>2.1.4</jackcess.version>
         <netbeans.version>RELEASE801</netbeans.version>
-        <assertj-core.version>2.2.0</assertj-core.version>
     </properties>
         
+    <distributionManagement>
+        <repository>
+            <id>oss-jfrog-artifactory-releases</id>
+            <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>oss-jfrog-artifactory-snapshots</id>
+            <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>netbeans-releases</id>
+            <url>http://bits.netbeans.org/maven2/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>        
+        <repository>
+            <id>joinup-releases</id>
+            <url>https://joinup.ec.europa.eu/nexus/content/repositories/releases/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+                
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -59,16 +88,22 @@
                     </exclusion>
                 </exclusions>
             </dependency> 
+            <dependency>
+                <groupId>org.netbeans.api</groupId>
+                <artifactId>org-openide-util-lookup</artifactId>
+                <version>${netbeans.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     
     <dependencies>
-        <!-- compile and runtime -->
+        <!-- compile only -->
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util-lookup</artifactId>
-            <version>${netbeans.version}</version>
+            <scope>provided</scope>
         </dependency>
+        <!-- compile and runtime -->
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-jdbc</artifactId>
@@ -96,32 +131,9 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>${assertj-core.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
-    <repositories>
-        <repository>
-            <id>netbeans</id>
-            <url>http://bits.netbeans.org/maven2/</url>
-        </repository>        
-        <repository>
-            <id>joinup-releases</id>
-            <url>https://joinup.ec.europa.eu/nexus/content/repositories/releases/</url>
-        </repository>
-    </repositories>
-    
-    <distributionManagement>
-        <repository>
-            <id>oss-jfrog-artifactory-releases</id>
-            <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
-        </repository>
-        <snapshotRepository>
-            <id>oss-jfrog-artifactory-snapshots</id>
-            <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
-        </snapshotRepository>
-    </distributionManagement>
     
     <build>
         <plugins>
