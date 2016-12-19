@@ -9,6 +9,9 @@ cache:
   directories:
     - $HOME/.m2
 
+addons:
+  srcclr: true
+
 deploy:
   provider: script
   script: mvn deploy -Dmaven.test.skip -s settings.xml
