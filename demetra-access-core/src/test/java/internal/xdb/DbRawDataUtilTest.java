@@ -14,9 +14,8 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.xdb;
+package internal.xdb;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import static org.junit.Assert.assertArrayEquals;
 import org.junit.Test;
@@ -24,6 +23,9 @@ import ec.tstoolkit.utilities.CheckedIterator;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 /**
  *
@@ -31,19 +33,9 @@ import java.util.List;
  */
 public final class DbRawDataUtilTest {
 
-    private static final DbRawDataUtil.ToIntFunction<Integer> TO_INDEX = new DbRawDataUtil.ToIntFunction<Integer>() {
-        @Override
-        public int applyAsInt(Integer value) {
-            return value - 1;
-        }
-    };
+    private static final ToIntFunction<Integer> TO_INDEX = o -> o - 1;
 
-    private static final Function<Integer, DbRawDataUtil.SuperDataType> TO_DATA_TYPE = new Function<Integer, DbRawDataUtil.SuperDataType>() {
-        @Override
-        public DbRawDataUtil.SuperDataType apply(Integer input) {
-            return DbRawDataUtil.SuperDataType.OTHER;
-        }
-    };
+    private static final Function<Integer, DbRawDataUtil.SuperDataType> TO_DATA_TYPE = o -> DbRawDataUtil.SuperDataType.OTHER;
 
     private static <T> CheckedIterator<T, RuntimeException> forArray(T... array) {
         return CheckedIterator.fromIterator(Iterators.forArray(array));
@@ -57,12 +49,7 @@ public final class DbRawDataUtilTest {
 
     @Test
     public void testDistinct() {
-        DbRawDataUtil.BiConsumer<Object[], Object[]> aggregator = new DbRawDataUtil.BiConsumer<Object[], Object[]>() {
-            @Override
-            public void accept(Object[] t, Object[] u) {
-                t[3] = Math.max((int) t[3], (int) u[3]);
-            }
-        };
+        BiConsumer<Object[], Object[]> aggregator = (t, u) -> t[3] = Math.max((int) t[3], (int) u[3]);
         {
             Object[][] data = {
                 {"B", 56.78, null, 0},

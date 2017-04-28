@@ -16,11 +16,10 @@
  */
 package be.nbb.demetra.access;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import ec.tss.ITsProvider;
 import ec.tss.TsAsyncMode;
 import ec.tss.tsproviders.DataSource;
+import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.IDataSourceBean;
 import ec.tss.tsproviders.IFileLoader;
 import ec.tss.tsproviders.db.DbAccessor;
@@ -38,13 +37,13 @@ public final class JackcessProvider extends DbProvider<JackcessBean> implements 
 
     public static final String NAME = "ACCESS", VERSION = "20130226";
 
+    private final HasFilePaths filePathSupport;
     private final JackcessFileFilter fileFilter;
-    private ImmutableList<File> paths;
 
     public JackcessProvider() {
         super(LoggerFactory.getLogger(JackcessProvider.class), NAME, TsAsyncMode.Once);
+        this.filePathSupport = HasFilePaths.of(cache::invalidateAll);
         this.fileFilter = new JackcessFileFilter();
-        this.paths = ImmutableList.of();
     }
 
     @Override
@@ -84,11 +83,11 @@ public final class JackcessProvider extends DbProvider<JackcessBean> implements 
 
     @Override
     public File[] getPaths() {
-        return Iterables.toArray(paths, File.class);
+        return filePathSupport.getPaths();
     }
 
     @Override
     public void setPaths(File[] paths) {
-        this.paths = paths != null ? ImmutableList.copyOf(paths) : ImmutableList.<File>of();
+        filePathSupport.setPaths(paths);
     }
 }

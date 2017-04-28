@@ -16,10 +16,11 @@
  */
 package be.nbb.demetra.access;
 
-import static be.nbb.demetra.access.JackcessFunc.*;
-import be.nbb.jackcess.JackcessResultSet;
-import be.nbb.jackcess.JackcessStatement;
-import be.nbb.xdb.DbBasicSelect;
+import internal.demetra.jackcess.JackcessFunc;
+import static internal.demetra.jackcess.JackcessFunc.*;
+import internal.jackcess.JackcessResultSet;
+import internal.jackcess.JackcessStatement;
+import internal.xdb.DbBasicSelect;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Range;
@@ -72,8 +73,8 @@ final class JackcessAccessor extends DbAccessor.Commander<JackcessBean> {
             }
 
             @Override
-            protected List<DbSetId> process(final JackcessResultSet rs) throws IOException {
-                final JackcessFunc<String[]> toDimValues = onGetStringArray(0, ref.getDepth());
+            protected List<DbSetId> process(JackcessResultSet rs) throws IOException {
+                JackcessFunc<String[]> toDimValues = onGetStringArray(0, ref.getDepth());
 
                 DbUtil.AllSeriesCursor<IOException> cursor = new DbUtil.AllSeriesCursor<IOException>() {
                     @Override
@@ -109,10 +110,10 @@ final class JackcessAccessor extends DbAccessor.Commander<JackcessBean> {
             }
 
             @Override
-            protected List<DbSeries> process(final JackcessResultSet rs) throws IOException {
-                final JackcessFunc<String[]> toDimValues = onGetStringArray(0, ref.getDepth());
-                final JackcessFunc<java.util.Date> toPeriod = onDate(rs, ref.getDepth(), dateParser);
-                final JackcessFunc<Number> toValue = onNumber(rs, ref.getDepth() + 1, numberParser);
+            protected List<DbSeries> process(JackcessResultSet rs) throws IOException {
+                JackcessFunc<String[]> toDimValues = onGetStringArray(0, ref.getDepth());
+                JackcessFunc<java.util.Date> toPeriod = onDate(rs, ref.getDepth(), dateParser);
+                JackcessFunc<Number> toValue = onNumber(rs, ref.getDepth() + 1, numberParser);
 
                 DbUtil.AllSeriesWithDataCursor<IOException> cursor = new DbUtil.AllSeriesWithDataCursor<IOException>() {
                     @Override
@@ -147,9 +148,9 @@ final class JackcessAccessor extends DbAccessor.Commander<JackcessBean> {
             }
 
             @Override
-            protected DbSeries process(final JackcessResultSet rs) throws IOException {
-                final JackcessFunc<Date> toPeriod = onDate(rs, 0, dateParser);
-                final JackcessFunc<Number> toValue = onNumber(rs, 1, numberParser);
+            protected DbSeries process(JackcessResultSet rs) throws IOException {
+                JackcessFunc<Date> toPeriod = onDate(rs, 0, dateParser);
+                JackcessFunc<Number> toValue = onNumber(rs, 1, numberParser);
 
                 DbUtil.SeriesWithDataCursor<IOException> cursor = new DbUtil.SeriesWithDataCursor<IOException>() {
                     int index = 0;
@@ -187,8 +188,8 @@ final class JackcessAccessor extends DbAccessor.Commander<JackcessBean> {
             }
 
             @Override
-            protected List<String> process(final JackcessResultSet rs) throws IOException {
-                final JackcessFunc<String> toChild = onGetObjectToString(0);
+            protected List<String> process(JackcessResultSet rs) throws IOException {
+                JackcessFunc<String> toChild = onGetObjectToString(0);
 
                 DbUtil.ChildrenCursor<IOException> cursor = new DbUtil.ChildrenCursor<IOException>() {
                     int index = 0;

@@ -16,7 +16,7 @@
  */
 package be.nbb.demetra.access;
 
-import com.google.common.collect.Lists;
+import com.google.common.base.Strings;
 import com.healthmarketscience.jackcess.Column;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
@@ -24,10 +24,17 @@ import ec.nbdemetra.db.DbColumnListCellRenderer;
 import ec.nbdemetra.db.DbIcon;
 import ec.nbdemetra.db.DbProviderBuddy;
 import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
+import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
-import ec.util.completion.AutoCompletionSource.Behavior;
-import ec.util.completion.ext.QuickAutoCompletionSource;
+import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;
+import static ec.util.completion.AutoCompletionSource.Behavior.NONE;
+import static ec.util.completion.AutoCompletionSource.Behavior.SYNC;
+import ec.util.completion.ExtAutoCompletionSource;
 import java.awt.Image;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ListCellRenderer;
 import org.openide.util.ImageUtilities;
@@ -38,7 +45,7 @@ import org.openide.util.lookup.ServiceProvider;
  * @author Philippe Charles
  */
 @ServiceProvider(service = IDataSourceProviderBuddy.class)
-public class JackcessProviderBuddy extends DbProviderBuddy<JackcessBean> {
+public final class JackcessProviderBuddy extends DbProviderBuddy<JackcessBean> {
 
     @Override
     protected boolean isFile() {
@@ -57,96 +64,86 @@ public class JackcessProviderBuddy extends DbProviderBuddy<JackcessBean> {
 
     @Override
     protected AutoCompletionSource getTableSource(JackcessBean bean) {
-        return new JackcessAutoCompletionSource<String>(bean) {
-            @Override
-            protected Iterable<String> getAllValues(Database database) throws Exception {
-                return database.getTableNames();
-            }
-        };
+        return ExtAutoCompletionSource
+                .builder(o -> getTables(bean))
+                .behavior(o -> !Strings.isNullOrEmpty(bean.getDbName()) ? ASYNC : NONE)
+                .cache(GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1)), o -> bean.getDbName(), SYNC)
+                .build();
     }
 
     @Override
     protected AutoCompletionSource getColumnSource(JackcessBean bean) {
-        return new JackcessAutoCompletionSource<Column>(bean) {
-            @Override
-            protected Iterable<Column> getAllValues(Database database) throws Exception {
-                return Lists.newArrayList(database.getTable(bean.getTableName()).getColumns());
-            }
-
-            @Override
-            protected String getValueAsString(Column value) {
-                return value.getName();
-            }
-        };
+        return ExtAutoCompletionSource
+                .builder(o -> getColumns(bean))
+                .behavior(o -> !Strings.isNullOrEmpty(bean.getDbName()) && !Strings.isNullOrEmpty(bean.getTableName()) ? ASYNC : NONE)
+                .valueToString(Column::getName)
+                .cache(GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1)), o -> bean.getDbName() + "/" + bean.getTableName(), SYNC)
+                .build();
     }
 
     @Override
     protected ListCellRenderer getColumnRenderer(JackcessBean bean) {
-        return new DbColumnListCellRenderer<Column>() {
-            @Override
-            protected String getName(Column value) {
-                return value.getName();
-            }
-
-            @Override
-            protected String getTypeName(Column value) {
-                return value.getType().name();
-            }
-
-            @Override
-            protected Icon getTypeIcon(Column value) {
-                switch (value.getType()) {
-                    case BINARY:
-                        return DbIcon.DATA_TYPE_BINARY;
-                    case BOOLEAN:
-                        return DbIcon.DATA_TYPE_BOOLEAN;
-                    case BYTE:
-                    case INT:
-                    case LONG:
-                    case NUMERIC:
-                    case DOUBLE:
-                    case FLOAT:
-                        return DbIcon.DATA_TYPE_DOUBLE;
-                    case SHORT_DATE_TIME:
-                        return DbIcon.DATA_TYPE_DATETIME;
-                    case TEXT:
-                        return DbIcon.DATA_TYPE_STRING;
-                    case MEMO:
-                    case COMPLEX_TYPE:
-                    case GUID:
-                    case MONEY:
-                    case OLE:
-                    case UNKNOWN_0D:
-                    case UNKNOWN_11:
-                    case UNSUPPORTED_FIXEDLEN:
-                    case UNSUPPORTED_VARLEN:
-                        return DbIcon.DATA_TYPE_NULL;
-                }
-                return null;
-            }
-        };
+        return new ColumnRenderer();
     }
 
-    static abstract class JackcessAutoCompletionSource<T> extends QuickAutoCompletionSource<T> {
+    private static Database openDatabase(JackcessBean bean) throws IOException {
+        return new DatabaseBuilder(bean.getFile()).setReadOnly(true).open();
+    }
 
-        final JackcessBean bean;
-
-        JackcessAutoCompletionSource(JackcessBean bean) {
-            this.bean = bean;
+    private static List<String> getTables(JackcessBean bean) throws IOException {
+        try (Database o = openDatabase(bean)) {
+            return new ArrayList(o.getTableNames());
         }
+    }
 
-        abstract protected Iterable<T> getAllValues(Database database) throws Exception;
+    private static List<Column> getColumns(JackcessBean bean) throws IOException {
+        try (Database o = openDatabase(bean)) {
+            return new ArrayList<>(o.getTable(bean.getTableName()).getColumns());
+        }
+    }
+
+    private static final class ColumnRenderer extends DbColumnListCellRenderer<Column> {
 
         @Override
-        protected Iterable<T> getAllValues() throws Exception {
-            try (Database database = new DatabaseBuilder(bean.getFile()).setReadOnly(true).open()) {
-                return getAllValues(database);
+        protected String getName(Column value) {
+            return value.getName();
+        }
+
+        @Override
+        protected String getTypeName(Column value) {
+            return value.getType().name();
+        }
+
+        @Override
+        protected Icon getTypeIcon(Column value) {
+            switch (value.getType()) {
+                case BINARY:
+                    return DbIcon.DATA_TYPE_BINARY;
+                case BOOLEAN:
+                    return DbIcon.DATA_TYPE_BOOLEAN;
+                case BYTE:
+                case INT:
+                case LONG:
+                case NUMERIC:
+                case DOUBLE:
+                case FLOAT:
+                    return DbIcon.DATA_TYPE_DOUBLE;
+                case SHORT_DATE_TIME:
+                    return DbIcon.DATA_TYPE_DATETIME;
+                case TEXT:
+                    return DbIcon.DATA_TYPE_STRING;
+                case MEMO:
+                case COMPLEX_TYPE:
+                case GUID:
+                case MONEY:
+                case OLE:
+                case UNKNOWN_0D:
+                case UNKNOWN_11:
+                case UNSUPPORTED_FIXEDLEN:
+                case UNSUPPORTED_VARLEN:
+                    return DbIcon.DATA_TYPE_NULL;
             }
-        }
-
-        @Override
-        public Behavior getBehavior(String term) {
-            return Behavior.ASYNC;
+            return null;
         }
     }
 }
