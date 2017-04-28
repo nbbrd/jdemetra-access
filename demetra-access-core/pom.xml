@@ -30,7 +30,7 @@
         <maven-source-plugin.version>2.4</maven-source-plugin.version>
         <!-- dependencies -->
         <demetra.version>2.2.0-RC1</demetra.version>
-        <jackcess.version>2.1.4</jackcess.version>
+        <jackcess.version>2.1.6</jackcess.version>
     </properties>
         
     <distributionManagement>
