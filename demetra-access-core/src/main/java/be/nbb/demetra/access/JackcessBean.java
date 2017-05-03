@@ -25,6 +25,7 @@ import java.io.File;
  *
  * @author Philippe Charles
  */
+@Deprecated
 public final class JackcessBean extends DbBean.BulkBean implements IFileBean {
 
     public JackcessBean() {

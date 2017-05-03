@@ -57,7 +57,7 @@ public class JackcessAccessorTest extends DbAccessorTest<JackcessBean> {
         TOP5.delete();
     }
 
-    private static File createResource() throws IOException {
+    public static File createResource() throws IOException {
         File result = File.createTempFile("Top5Browsers", ".mdb");
         try (Database db = new DatabaseBuilder(result).setFileFormat(Database.FileFormat.V2007).create()) {
 

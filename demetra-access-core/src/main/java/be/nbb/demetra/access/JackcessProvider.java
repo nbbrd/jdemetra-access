@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Philippe Charles
  */
+@Deprecated
 @ServiceProvider(service = ITsProvider.class)
 public final class JackcessProvider extends DbProvider<JackcessBean> implements IFileLoader {
 

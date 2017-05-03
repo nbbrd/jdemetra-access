@@ -32,6 +32,11 @@ import javax.annotation.Nullable;
 public interface JackcessFunc<T> extends DbUtil.Func<JackcessResultSet, T, IOException> {
 
     @Nonnull
+    public static JackcessFunc<String> onNull() {
+        return NullFunc.INSTANCE;
+    }
+
+    @Nonnull
     public static JackcessFunc<String[]> onGetStringArray(int index, int length) {
         return rs -> getStringArray(rs, index, length);
     }
@@ -59,6 +64,16 @@ public interface JackcessFunc<T> extends DbUtil.Func<JackcessResultSet, T, IOExc
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
+    static final class NullFunc implements JackcessFunc<String> {
+
+        static final JackcessFunc<String> INSTANCE = new NullFunc();
+
+        @Override
+        public String apply(JackcessResultSet input) throws IOException {
+            return null;
+        }
+    }
+
     @Nullable
     static String toString(@Nullable Object o) {
         return o != null ? o.toString() : null;
