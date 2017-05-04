@@ -248,14 +248,11 @@ public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Re
 
         @Override
         public DbBasicSelect getQuery() {
-            DbBasicSelect.Builder result = DbBasicSelect.from(table)
+            return DbBasicSelect.from(table)
                     .select(toSelect(ref)).select(tdp.getPeriodColumn(), tdp.getValueColumn()).select(label)
                     .filter(toFilter(ref))
-                    .orderBy(toSelect(ref));
-            if (!tdp.getVersionColumn().isEmpty()) {
-                result.orderBy(tdp.getPeriodColumn(), tdp.getVersionColumn());
-            }
-            return result.build();
+                    .orderBy(toSelect(ref)).orderBy(tdp.getPeriodColumn(), tdp.getVersionColumn())
+                    .build();
         }
 
         @Override
@@ -285,13 +282,11 @@ public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Re
 
         @Override
         public DbBasicSelect getQuery() {
-            DbBasicSelect.Builder result = DbBasicSelect.from(table)
+            return DbBasicSelect.from(table)
                     .select(tdp.getPeriodColumn(), tdp.getValueColumn()).select(label)
-                    .filter(toFilter(ref));
-            if (!tdp.getVersionColumn().isEmpty()) {
-                result.orderBy(tdp.getPeriodColumn(), tdp.getVersionColumn());
-            }
-            return result.build();
+                    .filter(toFilter(ref))
+                    .orderBy(tdp.getPeriodColumn(), tdp.getVersionColumn())
+                    .build();
         }
 
         @Override
