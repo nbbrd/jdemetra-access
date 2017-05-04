@@ -33,7 +33,6 @@ import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.util.completion.AutoCompletionSource;
 import internal.demetra.jackcess.JackcessAutoCompletion;
 import internal.demetra.jackcess.JackcessColumnRenderer;
-import internal.desktop.PropertyAdapter;
 import java.awt.Image;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -42,7 +41,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.ListCellRenderer;
-import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
@@ -151,7 +149,7 @@ public final class AccessFileProviderBuddy implements IDataSourceProviderBuddy {
         AutoCompletionSource columnCompletion = JackcessAutoCompletion.onColumns(loader, bean::getFile, bean::getTable);
         ListCellRenderer columnRenderer = new JackcessColumnRenderer();
         b.withAutoCompletion()
-                .select(dimensionsProperty(bean))
+                .select(bean, "dimColumns", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
                 .source(columnCompletion)
                 .separator(",")
                 .defaultValueSupplier(() -> JackcessAutoCompletion.getDefaultColumnsAsString(loader, bean::getFile, bean::getTable, ","))
@@ -205,13 +203,13 @@ public final class AccessFileProviderBuddy implements IDataSourceProviderBuddy {
                 .description(Bundle.bean_dataFormat_description())
                 .add();
         b.withEnum(TsFrequency.class)
-                .select(PropertyAdapter.of(bean, "obsGathering", ObsGathering.class, TsFrequency.class, ObsGathering::getFrequency, o -> withFrequency(bean.getObsGathering(), o)))
+                .select(bean, "obsGathering", ObsGathering.class, ObsGathering::getFrequency, o -> bean.getObsGathering().withFrequency(o))
                 .name("frequency")
                 .display(Bundle.bean_frequency_display())
                 .description(Bundle.bean_frequency_description())
                 .add();
         b.withEnum(TsAggregationType.class)
-                .select(PropertyAdapter.of(bean, "obsGathering", ObsGathering.class, TsAggregationType.class, ObsGathering::getAggregationType, o -> withAggregationType(bean.getObsGathering(), o)))
+                .select(bean, "obsGathering", ObsGathering.class, ObsGathering::getAggregationType, o -> bean.getObsGathering().withAggregationType(o))
                 .name("aggregationType")
                 .display(Bundle.bean_aggregationType_display())
                 .description(Bundle.bean_aggregationType_description())
@@ -232,32 +230,12 @@ public final class AccessFileProviderBuddy implements IDataSourceProviderBuddy {
                 .min(0)
                 .add();
         b.with(long.class)
-                .select(durationProperty(bean))
+                .select(bean, "cacheTtl", Duration.class, Duration::toMillis, Duration::ofMillis)
                 .editor(DhmsPropertyEditor.class)
                 .display(Bundle.bean_cacheTtl_display())
                 .description(Bundle.bean_cacheTtl_description())
                 .add();
         return b;
-    }
-
-    private static Node.Property<String> dimensionsProperty(AccessFileBean bean) {
-        return PropertyAdapter.of(bean, "dimColumns", List.class, String.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList);
-    }
-
-    private static Node.Property<Long> durationProperty(AccessFileBean bean) {
-        return PropertyAdapter.of(bean, "cacheTtl", Duration.class, long.class, Duration::toMillis, Duration::ofMillis);
-    }
-
-    private static ObsGathering withFrequency(ObsGathering o, TsFrequency freq) {
-        return o.isSkipMissingValues()
-                ? ObsGathering.excludingMissingValues(freq, o.getAggregationType())
-                : ObsGathering.includingMissingValues(freq, o.getAggregationType());
-    }
-
-    private static ObsGathering withAggregationType(ObsGathering o, TsAggregationType aggregationType) {
-        return o.isSkipMissingValues()
-                ? ObsGathering.excludingMissingValues(o.getFrequency(), aggregationType)
-                : ObsGathering.includingMissingValues(o.getFrequency(), aggregationType);
     }
     //</editor-fold>
 }
