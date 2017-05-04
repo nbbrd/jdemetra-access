@@ -64,7 +64,10 @@ public class JackcessAutoCompletion {
     }
 
     public String getDefaultColumnsAsString(HasFilePaths paths, Supplier<File> file, Supplier<String> table, CharSequence delimiter) throws Exception {
-        return onColumns(paths, file, table).getValues("").stream().map(o -> ((Column) o).getName()).collect(Collectors.joining(delimiter));
+        return loadColumns(paths, file, table).stream()
+                .sorted(Comparator.comparingInt(Column::getColumnIndex))
+                .map(Column::getName)
+                .collect(Collectors.joining(delimiter));
     }
 
     private Database open(File db) throws IOException {

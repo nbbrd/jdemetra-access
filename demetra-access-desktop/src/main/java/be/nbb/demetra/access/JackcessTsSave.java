@@ -23,6 +23,7 @@ import ec.nbdemetra.ui.SingleFileExporter;
 import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
 import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.nbdemetra.ui.tssave.ITsSave;
+import ec.nbdemetra.ui.tssave.TsSaveUtil;
 import ec.tss.Ts;
 import ec.tss.TsCollection;
 import ec.tss.TsCollectionInformation;
@@ -30,7 +31,6 @@ import ec.tstoolkit.timeseries.simplets.TsObservation;
 import ec.util.various.swing.OnAnyThread;
 import ec.util.various.swing.OnEDT;
 import internal.demetra.jackcess.JackcessTsExport;
-import internal.desktop.TsSaveUtil;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
@@ -85,6 +85,11 @@ public final class JackcessTsSave implements ITsSave {
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
     @OnEDT
+    private static boolean editBean(OptionsBean bean) {
+        return new PropertySheetDialogBuilder().title("Options").editSheet(getSheet(bean));
+    }
+
+    @OnEDT
     private static void store(TsCollection[] data, File file, OptionsBean opts) {
         new SingleFileExporter()
                 .file(file)
@@ -95,7 +100,7 @@ public final class JackcessTsSave implements ITsSave {
     }
 
     @OnAnyThread
-    private static File store(TsCollection[] data, File file, OptionsBean opts, ProgressHandle ph) throws IOException {
+    private static void store(TsCollection[] data, File file, OptionsBean opts, ProgressHandle ph) throws IOException {
         ph.progress("Loading time series");
         TsCollectionInformation content = TsSaveUtil.loadContent(data);
 
@@ -107,8 +112,6 @@ public final class JackcessTsSave implements ITsSave {
             ph.progress("Writing file");
             JackcessTsExport.writeContent(table, rowFunc, content, 10000);
         }
-
-        return file;
     }
 
     private static final class SaveFileFilter extends FileFilter {
@@ -137,10 +140,6 @@ public final class JackcessTsSave implements ITsSave {
         public JackcessTsExport.WriteOption writeOption = JackcessTsExport.WriteOption.TRUNCATE_EXISTING;
         public Database.FileFormat fileFormat = Database.FileFormat.V2010;
         public boolean beginPeriod = true;
-    }
-
-    private static boolean editBean(OptionsBean bean) {
-        return new PropertySheetDialogBuilder().title("Options").editSheet(getSheet(bean));
     }
 
     private static Sheet getSheet(OptionsBean bean) {
