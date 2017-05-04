@@ -16,7 +16,6 @@
  */
 package internal.demetra.jackcess;
 
-import com.google.common.cache.Cache;
 import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.RowId;
 import ec.tss.tsproviders.cube.CubeId;
@@ -44,7 +43,7 @@ class JackcessTableAsCubeUtil {
 
     final Collector<? super String, ?, String> LABEL_COLLECTOR = Collectors.joining(", ");
 
-    AllSeriesCursor allSeriesCursor(JackcessResultSet rs, AutoCloseable closeable, JackcessFunc<String[]> toDimValues, JackcessFunc<String> toLabel, CubeId ref, Cache<CubeId, Range<RowId>> rangeIndex) {
+    AllSeriesCursor allSeriesCursor(JackcessResultSet rs, AutoCloseable closeable, JackcessFunc<String[]> toDimValues, JackcessFunc<String> toLabel, CubeId ref, Map<CubeId, Range<RowId>> rangeIndex) {
         return new ResultSetAllSeriesCursor(rs, closeable, toDimValues, toLabel, ref, rangeIndex);
     }
 
@@ -56,7 +55,7 @@ class JackcessTableAsCubeUtil {
         return new ResultSetSeriesWithDataCursor(rs, closeable, toPeriod, toValue, toLabel, ref);
     }
 
-    ChildrenCursor childrenCursor(JackcessResultSet rs, AutoCloseable closeable, JackcessFunc<String> toChild, CubeId ref, Cache<CubeId, Range<RowId>> rangeIndex) {
+    ChildrenCursor childrenCursor(JackcessResultSet rs, AutoCloseable closeable, JackcessFunc<String> toChild, CubeId ref, Map<CubeId, Range<RowId>> rangeIndex) {
         return new ResultSetChildrenCursor(rs, closeable, toChild, ref, rangeIndex);
     }
 
@@ -113,11 +112,11 @@ class JackcessTableAsCubeUtil {
         private final JackcessFunc<String[]> toDimValues;
         private final JackcessFunc<String> toLabel;
         private final CubeId ref;
-        private final Cache<CubeId, Range<RowId>> rangeIndex;
+        private final Map<CubeId, Range<RowId>> rangeIndex;
         private String[] dimValues;
         private String label;
 
-        private ResultSetAllSeriesCursor(JackcessResultSet rs, AutoCloseable closeable, JackcessFunc<String[]> toDimValues, JackcessFunc<String> toLabel, CubeId ref, Cache<CubeId, Range<RowId>> rangeIndex) {
+        private ResultSetAllSeriesCursor(JackcessResultSet rs, AutoCloseable closeable, JackcessFunc<String[]> toDimValues, JackcessFunc<String> toLabel, CubeId ref, Map<CubeId, Range<RowId>> rangeIndex) {
             super(rs, closeable);
             this.toDimValues = toDimValues;
             this.toLabel = toLabel;
@@ -247,10 +246,10 @@ class JackcessTableAsCubeUtil {
 
         private final JackcessFunc<String> toChild;
         private final CubeId ref;
-        private final Cache<CubeId, Range<RowId>> rangeIndex;
+        private final Map<CubeId, Range<RowId>> rangeIndex;
         private String child;
 
-        private ResultSetChildrenCursor(JackcessResultSet rs, AutoCloseable closeable, JackcessFunc<String> toChild, CubeId ref, Cache<CubeId, Range<RowId>> rangeIndex) {
+        private ResultSetChildrenCursor(JackcessResultSet rs, AutoCloseable closeable, JackcessFunc<String> toChild, CubeId ref, Map<CubeId, Range<RowId>> rangeIndex) {
             super(rs, closeable);
             this.toChild = toChild;
             this.ref = ref;

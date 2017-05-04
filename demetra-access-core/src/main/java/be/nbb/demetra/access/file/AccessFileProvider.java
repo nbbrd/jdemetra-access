@@ -35,13 +35,10 @@ import ec.tss.tsproviders.cursor.HasTsCursor;
 import ec.tss.tsproviders.utils.DataSourcePreconditions;
 import ec.tss.tsproviders.utils.IParam;
 import ec.tstoolkit.utilities.GuavaCaches;
-import ec.tstoolkit.utilities.LastModifiedFileCache;
 import internal.demetra.jackcess.JackcessTableAsCubeResource;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.time.Duration;
-import java.util.concurrent.ConcurrentMap;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,9 +129,8 @@ public final class AccessFileProvider implements IFileLoader {
 
         private CubeAccessor load(DataSource key) throws FileNotFoundException {
             AccessFileBean bean = param.get(key);
-            File db = paths.resolveFilePath(bean.getFile());
-            JackcessTableAsCubeResource result = JackcessTableAsCubeResource.create(db, bean.getTable(), bean.getDimColumns(), toDataParams(bean), bean.getObsGathering(), bean.getLabelColumn());
-            return TableAsCubeAccessor.create(result).bulk(bean.getCacheDepth(), toBulkCache(db, bean.getCacheTtl()));
+            JackcessTableAsCubeResource result = JackcessTableAsCubeResource.create(paths, bean.getFile(), bean.getTable(), bean.getDimColumns(), toDataParams(bean), bean.getObsGathering(), bean.getLabelColumn());
+            return TableAsCubeAccessor.create(result).bulk(bean.getCacheDepth(), GuavaCaches.ttlCacheAsMap(bean.getCacheTtl()));
         }
 
         private static TableDataParams toDataParams(AccessFileBean bean) {
@@ -144,11 +140,6 @@ public final class AccessFileProvider implements IFileLoader {
                     .versionColumn(bean.getVersionColumn())
                     .obsFormat(bean.getObsFormat())
                     .build();
-        }
-
-        private static ConcurrentMap<CubeId, Object> toBulkCache(File db, Duration duration) {
-            Cache<CubeId, Object> ttl = GuavaCaches.ttlCache(duration);
-            return LastModifiedFileCache.from(db, ttl).asMap();
         }
     }
 }

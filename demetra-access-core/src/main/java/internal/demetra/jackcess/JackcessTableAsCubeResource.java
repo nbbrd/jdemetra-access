@@ -16,12 +16,11 @@
  */
 package internal.demetra.jackcess;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
 import com.healthmarketscience.jackcess.RowId;
+import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.cube.CubeId;
 import ec.tss.tsproviders.cube.TableAsCubeAccessor;
 import ec.tss.tsproviders.cube.TableAsCubeUtil;
@@ -31,7 +30,7 @@ import ec.tss.tsproviders.utils.ObsGathering;
 import ec.tss.tsproviders.utils.OptionalTsData;
 import static ec.tss.tsproviders.utils.StrangeParsers.yearFreqPosParser;
 import ec.tstoolkit.design.VisibleForTesting;
-import ec.tstoolkit.utilities.LastModifiedFileCache;
+import ec.tstoolkit.utilities.GuavaCaches;
 import static internal.demetra.jackcess.JackcessFunc.onDate;
 import static internal.demetra.jackcess.JackcessFunc.onGetObjectToString;
 import static internal.demetra.jackcess.JackcessFunc.onGetStringArray;
@@ -42,6 +41,7 @@ import internal.jackcess.JackcessStatement;
 import internal.xdb.DbBasicSelect;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -58,32 +58,35 @@ public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Re
 
     @Nonnull
     public static JackcessTableAsCubeResource create(
-            @Nonnull File db,
+            @Nonnull HasFilePaths paths,
+            @Nonnull File file,
             @Nonnull String table,
             @Nonnull List<String> dimColumns,
             @Nonnull TableDataParams tdp,
             @Nonnull ObsGathering gathering,
             @Nonnull String labelColumn) {
-        return new JackcessTableAsCubeResource(db, table, CubeId.root(dimColumns), tdp, gathering, labelColumn);
+        return new JackcessTableAsCubeResource(paths, file, table, CubeId.root(dimColumns), tdp, gathering, labelColumn);
     }
 
-    private final File db;
+    private final HasFilePaths paths;
+    private final File file;
     private final String table;
     private final CubeId root;
     private final TableDataParams tdp;
     private final ObsGathering gathering;
     private final String labelColumn;
     @VisibleForTesting
-    final Cache<CubeId, Range<RowId>> rangeIndex;
+    final Map<CubeId, Range<RowId>> rangeIndex;
 
-    private JackcessTableAsCubeResource(File db, String table, CubeId root, TableDataParams tdp, ObsGathering gathering, String labelColumn) {
-        this.db = db;
+    private JackcessTableAsCubeResource(HasFilePaths paths, File file, String table, CubeId root, TableDataParams tdp, ObsGathering gathering, String labelColumn) {
+        this.paths = paths;
+        this.file = file;
         this.table = table;
         this.root = root;
         this.tdp = tdp;
         this.gathering = gathering;
         this.labelColumn = labelColumn;
-        this.rangeIndex = LastModifiedFileCache.from(db, CacheBuilder.newBuilder().<CubeId, Range<RowId>>build());
+        this.rangeIndex = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(5));
     }
 
     @Override
@@ -98,27 +101,27 @@ public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Re
 
     @Override
     public TableAsCubeAccessor.AllSeriesCursor getAllSeriesCursor(CubeId id) throws Exception {
-        return new AllSeriesQuery(id, table, labelColumn, rangeIndex).call(db, rangeIndex.getIfPresent(id));
+        return new AllSeriesQuery(id, table, labelColumn, rangeIndex).call(paths, file, rangeIndex.get(id));
     }
 
     @Override
     public TableAsCubeAccessor.AllSeriesWithDataCursor<Date> getAllSeriesWithDataCursor(CubeId id) throws Exception {
-        return new AllSeriesWithDataQuery(id, table, labelColumn, tdp).call(db, rangeIndex.getIfPresent(id));
+        return new AllSeriesWithDataQuery(id, table, labelColumn, tdp).call(paths, file, rangeIndex.get(id));
     }
 
     @Override
     public TableAsCubeAccessor.SeriesWithDataCursor<Date> getSeriesWithDataCursor(CubeId id) throws Exception {
-        return new SeriesWithDataQuery(id, table, labelColumn, tdp).call(db, rangeIndex.getIfPresent(id));
+        return new SeriesWithDataQuery(id, table, labelColumn, tdp).call(paths, file, rangeIndex.get(id));
     }
 
     @Override
     public TableAsCubeAccessor.ChildrenCursor getChildrenCursor(CubeId id) throws Exception {
-        return new ChildrenQuery(id, table, rangeIndex).call(db, rangeIndex.getIfPresent(id));
+        return new ChildrenQuery(id, table, rangeIndex).call(paths, file, rangeIndex.get(id));
     }
 
     @Override
     public String getDisplayName() throws Exception {
-        return TableAsCubeUtil.getDisplayName(db.getPath(), table, tdp.getValueColumn(), gathering);
+        return TableAsCubeUtil.getDisplayName(file.getPath(), table, tdp.getValueColumn(), gathering);
     }
 
     @Override
@@ -182,12 +185,12 @@ public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Re
         T process(@Nonnull JackcessResultSet rs, @Nonnull AutoCloseable closeable) throws IOException;
 
         @Nullable
-        default public T call(@Nonnull File db, @Nullable Range<RowId> range) throws IOException {
+        default public T call(@Nonnull HasFilePaths paths, @Nonnull File file, @Nullable Range<RowId> range) throws IOException {
             Database conn = null;
             JackcessStatement stmt = null;
             JackcessResultSet rs = null;
             try {
-                conn = new DatabaseBuilder(db).setReadOnly(true).open();
+                conn = new DatabaseBuilder(paths.resolveFilePath(file)).setReadOnly(true).open();
                 stmt = new JackcessStatement(conn, range);
                 DbBasicSelect query = getQuery();
                 rs = stmt.executeQuery(query);
@@ -204,9 +207,9 @@ public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Re
         private final CubeId ref;
         private final String table;
         private final String label;
-        private final Cache<CubeId, Range<RowId>> rangeIndex;
+        private final Map<CubeId, Range<RowId>> rangeIndex;
 
-        AllSeriesQuery(CubeId id, String table, String label, Cache<CubeId, Range<RowId>> rangeIndex) {
+        AllSeriesQuery(CubeId id, String table, String label, Map<CubeId, Range<RowId>> rangeIndex) {
             this.ref = id;
             this.table = table;
             this.label = label;
@@ -303,9 +306,9 @@ public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Re
 
         private final CubeId ref;
         private final String table;
-        private final Cache<CubeId, Range<RowId>> rangeIndex;
+        private final Map<CubeId, Range<RowId>> rangeIndex;
 
-        ChildrenQuery(CubeId id, String table, Cache<CubeId, Range<RowId>> rangeIndex) {
+        ChildrenQuery(CubeId id, String table, Map<CubeId, Range<RowId>> rangeIndex) {
             this.ref = id;
             this.table = table;
             this.rangeIndex = rangeIndex;
