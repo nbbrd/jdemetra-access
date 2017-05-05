@@ -20,11 +20,14 @@ import internal.demetra.jackcess.JackcessColumnRenderer;
 import ec.nbdemetra.db.DbProviderBuddy;
 import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
 import ec.tss.tsproviders.TsProviders;
+import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
 import ec.util.completion.AutoCompletionSources;
 import internal.demetra.jackcess.JackcessAutoCompletion;
 import java.awt.Image;
+import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
 import javax.swing.ListCellRenderer;
 import org.openide.util.ImageUtilities;
 import org.openide.util.lookup.ServiceProvider;
@@ -36,6 +39,12 @@ import org.openide.util.lookup.ServiceProvider;
 @Deprecated
 @ServiceProvider(service = IDataSourceProviderBuddy.class)
 public final class JackcessProviderBuddy extends DbProviderBuddy<JackcessBean> {
+
+    private final ConcurrentMap autoCompletionCache;
+
+    public JackcessProviderBuddy() {
+        this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
+    }
 
     @Override
     protected boolean isFile() {
@@ -55,14 +64,14 @@ public final class JackcessProviderBuddy extends DbProviderBuddy<JackcessBean> {
     @Override
     protected AutoCompletionSource getTableSource(JackcessBean bean) {
         return lookupProvider()
-                .map(o -> JackcessAutoCompletion.onTables(o, bean::getFile))
+                .map(o -> JackcessAutoCompletion.onTables(o, bean::getFile, autoCompletionCache))
                 .orElseGet(AutoCompletionSources::empty);
     }
 
     @Override
     protected AutoCompletionSource getColumnSource(JackcessBean bean) {
         return lookupProvider()
-                .map(o -> JackcessAutoCompletion.onColumns(o, bean::getFile, bean::getTableName))
+                .map(o -> JackcessAutoCompletion.onColumns(o, bean::getFile, bean::getTableName, autoCompletionCache))
                 .orElseGet(AutoCompletionSources::empty);
     }
 

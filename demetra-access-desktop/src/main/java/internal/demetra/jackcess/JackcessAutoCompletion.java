@@ -21,7 +21,6 @@ import com.healthmarketscience.jackcess.Column;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
 import ec.tss.tsproviders.HasFilePaths;
-import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
 import static ec.util.completion.AutoCompletionSource.Behavior.ASYNC;
 import static ec.util.completion.AutoCompletionSource.Behavior.NONE;
@@ -29,10 +28,10 @@ import static ec.util.completion.AutoCompletionSource.Behavior.SYNC;
 import ec.util.completion.ExtAutoCompletionSource;
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -44,27 +43,33 @@ import java.util.stream.Collectors;
 @lombok.experimental.UtilityClass
 public class JackcessAutoCompletion {
 
-    public AutoCompletionSource onTables(HasFilePaths paths, Supplier<File> file) {
+    public AutoCompletionSource onTables(HasFilePaths paths, Supplier<File> file, ConcurrentMap cache) {
         return ExtAutoCompletionSource
                 .builder(o -> loadTables(paths, file))
                 .behavior(o -> canLoadTables(file) ? ASYNC : NONE)
                 .postProcessor(JackcessAutoCompletion::filterAndSortTables)
-                .cache(GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1)), o -> getTableCacheKey(file), SYNC)
+                .cache(cache, o -> getTableCacheKey(file), SYNC)
                 .build();
     }
 
-    public AutoCompletionSource onColumns(HasFilePaths paths, Supplier<File> file, Supplier<String> table) {
+    public AutoCompletionSource onColumns(HasFilePaths paths, Supplier<File> file, Supplier<String> table, ConcurrentMap cache) {
         return ExtAutoCompletionSource
                 .builder(o -> loadColumns(paths, file, table))
                 .behavior(o -> canLoadColumns(file, table) ? ASYNC : NONE)
                 .postProcessor(JackcessAutoCompletion::filterAndSortColumns)
                 .valueToString(Column::getName)
-                .cache(GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1)), o -> getColumnCacheKey(file, table), SYNC)
+                .cache(cache, o -> getColumnCacheKey(file, table), SYNC)
                 .build();
     }
 
-    public String getDefaultColumnsAsString(HasFilePaths paths, Supplier<File> file, Supplier<String> table, CharSequence delimiter) throws Exception {
-        return loadColumns(paths, file, table).stream()
+    public String getDefaultColumnsAsString(HasFilePaths paths, Supplier<File> file, Supplier<String> table, ConcurrentMap cache, CharSequence delimiter) throws IOException {
+        String key = getColumnCacheKey(file, table);
+        List<Column> columns = (List<Column>) cache.get(key);
+        if (columns == null) {
+            columns = loadColumns(paths, file, table);
+            cache.put(key, columns);
+        }
+        return columns.stream()
                 .sorted(Comparator.comparingInt(Column::getColumnIndex))
                 .map(Column::getName)
                 .collect(Collectors.joining(delimiter));

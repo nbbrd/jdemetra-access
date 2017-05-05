@@ -30,6 +30,7 @@ import ec.tss.tsproviders.utils.DataFormat;
 import ec.tss.tsproviders.utils.ObsGathering;
 import ec.tstoolkit.timeseries.TsAggregationType;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
+import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
 import internal.demetra.jackcess.JackcessAutoCompletion;
 import internal.demetra.jackcess.JackcessColumnRenderer;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
 import javax.swing.ListCellRenderer;
 import org.openide.nodes.Sheet;
 import org.openide.util.ImageUtilities;
@@ -53,6 +55,12 @@ import org.openide.util.lookup.ServiceProvider;
  */
 @ServiceProvider(service = IDataSourceProviderBuddy.class, supersedes = "be.nbb.demetra.access.JackcessProviderBuddy")
 public final class AccessFileProviderBuddy implements IDataSourceProviderBuddy {
+
+    private final ConcurrentMap autoCompletionCache;
+
+    public AccessFileProviderBuddy() {
+        this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
+    }
 
     @Override
     public String getProviderName() {
@@ -90,7 +98,7 @@ public final class AccessFileProviderBuddy implements IDataSourceProviderBuddy {
                 return new PropertySheetDialogBuilder()
                         .title(title)
                         .icon(getIcon(BeanInfo.ICON_COLOR_16x16, false))
-                        .editSheet(createSheet((AccessFileBean) bean, provider.get()));
+                        .editSheet(createSheet((AccessFileBean) bean, provider.get(), autoCompletionCache));
             }
         }
         return IDataSourceProviderBuddy.super.editBean(title, bean);
@@ -101,13 +109,18 @@ public final class AccessFileProviderBuddy implements IDataSourceProviderBuddy {
         return TsProviders.lookup(AccessFileProvider.class, AccessFileProvider.NAME).toJavaUtil();
     }
 
-    private static Sheet createSheet(AccessFileBean bean, IFileLoader loader) {
+    @NbBundle.Messages({
+        "bean.source.description=",
+        "bean.structure.description=",
+        "bean.options.description=",
+        "bean.cache.description=Mechanism used to improve performance."})
+    private static Sheet createSheet(AccessFileBean bean, IFileLoader loader, ConcurrentMap cache) {
         Sheet result = new Sheet();
         NodePropertySetBuilder b = new NodePropertySetBuilder();
-        result.put(withSource(b.reset("Source"), bean, loader).build());
-        result.put(withStructure(b.reset("Structure"), bean, loader).build());
-        result.put(withOptions(b.reset("Options"), bean).build());
-        result.put(withCache(b.reset("Cache").description("Mechanism used to improve performance."), bean).build());
+        result.put(withSource(b.reset("Source").description(Bundle.bean_source_description()), bean, loader, cache).build());
+        result.put(withStructure(b.reset("Structure").description(Bundle.bean_structure_description()), bean, loader, cache).build());
+        result.put(withOptions(b.reset("Options").description(Bundle.bean_options_description()), bean).build());
+        result.put(withCache(b.reset("Cache").description(Bundle.bean_cache_description()), bean).build());
         return result;
     }
 
@@ -116,7 +129,7 @@ public final class AccessFileProviderBuddy implements IDataSourceProviderBuddy {
         "bean.file.description=The path to the database file.",
         "bean.table.display=Table name",
         "bean.table.description=The name of the table (or view) that contains observations."})
-    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, AccessFileBean bean, IFileLoader loader) {
+    private static NodePropertySetBuilder withSource(NodePropertySetBuilder b, AccessFileBean bean, IFileLoader loader, ConcurrentMap cache) {
         b.withFile()
                 .select(bean, "file")
                 .filterForSwing(new FileLoaderFileFilter(loader))
@@ -127,7 +140,7 @@ public final class AccessFileProviderBuddy implements IDataSourceProviderBuddy {
                 .add();
         b.withAutoCompletion()
                 .select(bean, "table")
-                .source(JackcessAutoCompletion.onTables(loader, bean::getFile))
+                .source(JackcessAutoCompletion.onTables(loader, bean::getFile, cache))
                 .display(Bundle.bean_table_display())
                 .description(Bundle.bean_table_description())
                 .add();
@@ -145,14 +158,14 @@ public final class AccessFileProviderBuddy implements IDataSourceProviderBuddy {
         "bean.versionColumn.description=An optional column name that defines the version of an observation.",
         "bean.labelColumn.display=Label column",
         "bean.labelColumn.description=An optional column name that defines the label of a series."})
-    private static NodePropertySetBuilder withStructure(NodePropertySetBuilder b, AccessFileBean bean, IFileLoader loader) {
-        AutoCompletionSource columnCompletion = JackcessAutoCompletion.onColumns(loader, bean::getFile, bean::getTable);
+    private static NodePropertySetBuilder withStructure(NodePropertySetBuilder b, AccessFileBean bean, IFileLoader loader, ConcurrentMap cache) {
+        AutoCompletionSource columnCompletion = JackcessAutoCompletion.onColumns(loader, bean::getFile, bean::getTable, cache);
         ListCellRenderer columnRenderer = new JackcessColumnRenderer();
         b.withAutoCompletion()
                 .select(bean, "dimColumns", List.class, Joiner.on(',')::join, Splitter.on(',').trimResults().omitEmptyStrings()::splitToList)
                 .source(columnCompletion)
                 .separator(",")
-                .defaultValueSupplier(() -> JackcessAutoCompletion.getDefaultColumnsAsString(loader, bean::getFile, bean::getTable, ","))
+                .defaultValueSupplier(() -> JackcessAutoCompletion.getDefaultColumnsAsString(loader, bean::getFile, bean::getTable, cache, ","))
                 .cellRenderer(columnRenderer)
                 .display(Bundle.bean_dimColumns_display())
                 .description(Bundle.bean_dimColumns_description())
