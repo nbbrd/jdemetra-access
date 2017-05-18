@@ -31,7 +31,7 @@
         <nbm-maven-plugin.version>3.14</nbm-maven-plugin.version>
         <maven-source-plugin.version>2.4</maven-source-plugin.version>
         <!-- dependencies -->
-        <demetra.version>2.2.0-RC1</demetra.version>
+        <demetra.version>2.2.0-RC2</demetra.version>
     </properties>
 
     <distributionManagement>
