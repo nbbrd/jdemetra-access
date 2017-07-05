@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.jackcess;
+package internal.jackcess;
 
 import com.google.common.collect.ImmutableSortedMap;
 import com.healthmarketscience.jackcess.Column;
@@ -29,7 +29,7 @@ import java.util.TreeSet;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static be.nbb.jackcess.JackcessColumnComparator.BY_COLUMN_INDEX;
+import static internal.jackcess.JackcessColumnComparator.BY_COLUMN_INDEX;
 import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.ColumnBuilder;
 import com.healthmarketscience.jackcess.DataType;

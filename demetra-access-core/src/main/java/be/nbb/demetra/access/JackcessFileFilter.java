@@ -16,12 +16,12 @@
  */
 package be.nbb.demetra.access;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.FluentIterable;
 import com.healthmarketscience.jackcess.Database;
+import com.healthmarketscience.jackcess.Database.FileFormat;
 import java.io.File;
 import java.io.FileFilter;
+import java.util.EnumSet;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -30,37 +30,25 @@ import java.io.FileFilter;
  */
 public final class JackcessFileFilter implements FileFilter {
 
+    private final EnumSet<Database.FileFormat> formats;
     private final String description;
 
     public JackcessFileFilter() {
+        this.formats = EnumSet.allOf(Database.FileFormat.class);
         this.description = new StringBuilder()
                 .append("Access file (")
-                .append(Joiner.on(", ").join(FluentIterable.of(Database.FileFormat.values()).transform(toFileExt()).toSet()))
+                .append(formats.stream().map(FileFormat::getFileExtension).distinct().collect(Collectors.joining(",")))
                 .append(")")
                 .toString();
     }
 
     @Override
     public boolean accept(File f) {
-        String tmp = f.getPath().toLowerCase();
-        for (Database.FileFormat o : Database.FileFormat.values()) {
-            if (tmp.endsWith(o.getFileExtension())) {
-                return true;
-            }
-        }
-        return false;
+        String path = f.getPath().toLowerCase();
+        return formats.stream().anyMatch(o -> path.endsWith(o.getFileExtension()));
     }
 
     public String getDescription() {
         return description;
-    }
-
-    private Function<Database.FileFormat, String> toFileExt() {
-        return new Function<Database.FileFormat, String>() {
-            @Override
-            public String apply(Database.FileFormat input) {
-                return input.getFileExtension();
-            }
-        };
     }
 }

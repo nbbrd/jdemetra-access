@@ -16,45 +16,30 @@
  */
 package be.nbb.demetra.access;
 
-import com.google.common.base.Function;
-import com.google.common.collect.FluentIterable;
-import com.healthmarketscience.jackcess.ColumnBuilder;
-import com.healthmarketscience.jackcess.DataType;
 import com.healthmarketscience.jackcess.Database;
-import com.healthmarketscience.jackcess.DatabaseBuilder;
 import com.healthmarketscience.jackcess.Table;
-import com.healthmarketscience.jackcess.TableBuilder;
-import ec.nbdemetra.ui.notification.MessageType;
-import ec.nbdemetra.ui.notification.NotifyUtil;
-import ec.nbdemetra.ui.ns.AbstractNamedService;
-import ec.nbdemetra.ui.properties.IBeanEditor;
+import ec.nbdemetra.ui.DemetraUiIcon;
+import ec.nbdemetra.ui.SingleFileExporter;
 import ec.nbdemetra.ui.properties.NodePropertySetBuilder;
-import ec.nbdemetra.ui.properties.OpenIdePropertySheetBeanEditor;
+import ec.nbdemetra.ui.properties.PropertySheetDialogBuilder;
 import ec.nbdemetra.ui.tssave.ITsSave;
+import ec.nbdemetra.ui.tssave.TsSaveUtil;
 import ec.tss.Ts;
+import ec.tss.TsCollection;
 import ec.tss.TsCollectionInformation;
-import ec.tss.TsInformation;
-import ec.tss.TsInformationType;
 import ec.tstoolkit.timeseries.simplets.TsObservation;
-import ec.tstoolkit.timeseries.simplets.TsPeriod;
-import ec.tstoolkit.utilities.NextJdk;
-import ec.util.desktop.Desktop;
-import ec.util.desktop.DesktopManager;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import ec.util.various.swing.OnAnyThread;
+import ec.util.various.swing.OnEDT;
+import internal.demetra.jackcess.JackcessTsExport;
+import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import javax.swing.SwingWorker;
+import java.util.function.BiFunction;
 import javax.swing.filechooser.FileFilter;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.filesystems.FileChooserBuilder;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
+import org.openide.util.ImageUtilities;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
@@ -63,29 +48,19 @@ import org.openide.util.lookup.ServiceProvider;
  * @since 2.1.0
  */
 @ServiceProvider(service = ITsSave.class)
-public final class JackcessTsSave extends AbstractNamedService implements ITsSave {
+public final class JackcessTsSave implements ITsSave {
 
-    private final FileChooserBuilder fileChooserBuilder;
-    private final OptionsEditor optionsEditor;
-    private final OptionsBean optionsBean;
+    private final FileChooserBuilder fileChooser;
+    private final OptionsBean options;
 
     public JackcessTsSave() {
-        super(ITsSave.class, "JackcessTsSave");
-        this.fileChooserBuilder = new FileChooserBuilder(JackcessTsSave.class)
-                .setFileFilter(new SaveFileFilter())
-                .setSelectionApprover(new SaveSelectionApprover());
-        this.optionsEditor = new OptionsEditor();
-        this.optionsBean = new OptionsBean();
+        this.fileChooser = TsSaveUtil.fileChooser(JackcessTsSave.class).setFileFilter(new SaveFileFilter());
+        this.options = new OptionsBean();
     }
 
     @Override
-    public void save(Ts[] ts) {
-        File file = fileChooserBuilder.showSaveDialog();
-        if (file != null) {
-            if (optionsEditor.editBean(optionsBean)) {
-                save(ts, file, optionsBean);
-            }
-        }
+    public String getName() {
+        return "JackcessTsSave";
     }
 
     @Override
@@ -93,175 +68,49 @@ public final class JackcessTsSave extends AbstractNamedService implements ITsSav
         return "Access file";
     }
 
+    @Override
+    public Image getIcon(int type, boolean opened) {
+        return ImageUtilities.icon2Image(DemetraUiIcon.PUZZLE_16);
+    }
+
+    @Override
+    public void save(Ts[] input) {
+        save(TsSaveUtil.toCollections(input));
+    }
+
+    @Override
+    public void save(TsCollection[] input) {
+        TsSaveUtil.saveToFile(fileChooser, o -> editBean(options), o -> store(input, o, options));
+    }
+
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private void save(final Ts[] data, final File file, final OptionsBean opts) {
-        new SwingWorker<Void, String>() {
-            final ProgressHandle progressHandle = ProgressHandleFactory.createHandle("Saving to access file");
-
-            @Override
-            protected Void doInBackground() throws Exception {
-                progressHandle.start();
-                progressHandle.progress("Initializing content");
-                TsCollectionInformation col = getContent(data);
-
-                progressHandle.progress("Creating content");
-                try (Database database = getDatabase(file, opts.fileFormat, opts.writeOption)) {
-                    Table table = getTable(database, opts.writeOption, opts.tableName, opts.dimColumn, opts.periodColumn, opts.valueColumn, opts.versionColumn);
-                    BiFunction<String, TsObservation, Object[]> rowFunc = getRowFunc(table, opts.beginPeriod, opts.dimColumn, opts.periodColumn, opts.valueColumn, opts.versionColumn);
-
-                    progressHandle.progress("Writing content");
-                    writeContent(table, rowFunc, col, 10000);
-                }
-
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                progressHandle.finish();
-                try {
-                    get();
-                    NotifyUtil.show("Access file saved", "Show in folder", MessageType.SUCCESS, new ShowInFolderActionListener(file), null, null);
-                } catch (InterruptedException | ExecutionException ex) {
-                    NotifyUtil.error("Saving to access file failed", ex.getMessage(), ex);
-                }
-            }
-        }.execute();
+    @OnEDT
+    private static boolean editBean(OptionsBean bean) {
+        return new PropertySheetDialogBuilder().title("Options").editSheet(getSheet(bean));
     }
 
-    private static TsCollectionInformation getContent(Ts[] data) {
-        TsCollectionInformation result = new TsCollectionInformation();
-        for (Ts o : data) {
-            result.items.add(new TsInformation(o, TsInformationType.All));
-        }
-        return result;
+    @OnEDT
+    private static void store(TsCollection[] data, File file, OptionsBean opts) {
+        new SingleFileExporter()
+                .file(file)
+                .progressLabel("Saving to access file")
+                .onErrorNotify("Saving to access file failed")
+                .onSussessNotify("Access file saved")
+                .execAsync((f, ph) -> store(data, f, opts, ph));
     }
 
-    private static Database getDatabase(File file, Database.FileFormat fileFormat, WriteOption writeOption) throws IOException {
-        return file.exists() && writeOption == WriteOption.APPEND
-                ? DatabaseBuilder.open(file)
-                : DatabaseBuilder.create(fileFormat, file);
-    }
+    @OnAnyThread
+    private static void store(TsCollection[] data, File file, OptionsBean opts, ProgressHandle ph) throws IOException {
+        ph.progress("Loading time series");
+        TsCollectionInformation content = TsSaveUtil.loadContent(data);
 
-    private static Table getTable(Database database, WriteOption writeOption, String tableName, String dimColumn, String periodColumn, String valueColumn, String versionColumn) throws IOException {
-        if (database.getTableNames().contains(tableName) && writeOption == WriteOption.APPEND) {
-            return database.getTable(tableName);
-        }
-        TableBuilder builder = new TableBuilder(tableName);
-        builder.addColumn(new ColumnBuilder(dimColumn, DataType.TEXT));
-        builder.addColumn(new ColumnBuilder(periodColumn, DataType.SHORT_DATE_TIME));
-        builder.addColumn(new ColumnBuilder(valueColumn, DataType.DOUBLE));
-        if (!versionColumn.isEmpty()) {
-            builder.addColumn(new ColumnBuilder(versionColumn, DataType.SHORT_DATE_TIME));
-            builder.setPrimaryKey(dimColumn, periodColumn, versionColumn);
-        } else {
-            builder.setPrimaryKey(dimColumn, periodColumn);
-        }
-        return builder.toTable(database);
-    }
+        ph.progress("Creating content");
+        try (Database database = JackcessTsExport.getDatabase(file, opts.fileFormat, opts.writeOption)) {
+            Table table = JackcessTsExport.getTable(database, opts.writeOption, opts.tableName, opts.dimColumn, opts.periodColumn, opts.valueColumn, opts.versionColumn);
+            BiFunction<String, TsObservation, Object[]> rowFunc = JackcessTsExport.getRowFunc(table, opts.beginPeriod, opts.dimColumn, opts.periodColumn, opts.valueColumn, opts.versionColumn);
 
-    private static BiFunction<String, TsObservation, Object[]> getRowFunc(Table table, boolean beginPeriod, String dimColumn, String periodColumn, String valueColumn, String versionColumn) {
-        final Function<TsPeriod, Date> toDate = beginPeriod ? TsPeriodDateFunc.FIRST : TsPeriodDateFunc.LAST;
-
-        final int columnCount = table.getColumnCount();
-
-        final int dimIndex = table.getColumn(dimColumn).getColumnIndex();
-        final int periodIndex = table.getColumn(periodColumn).getColumnIndex();
-        final int valueIndex = table.getColumn(valueColumn).getColumnIndex();
-
-        if (versionColumn.isEmpty()) {
-            return new BiFunction<String, TsObservation, Object[]>() {
-                @Override
-                public Object[] apply(String name, TsObservation o) {
-                    Object[] result = new Object[columnCount];
-                    result[dimIndex] = name;
-                    result[periodIndex] = toDate.apply(o.getPeriod());
-                    result[valueIndex] = o.getValue();
-                    return result;
-                }
-            };
-        }
-
-        final int versionIndex = table.getColumn(versionColumn).getColumnIndex();
-        final Date version = new Date();
-
-        return new BiFunction<String, TsObservation, Object[]>() {
-            @Override
-            public Object[] apply(String name, TsObservation o) {
-                Object[] result = new Object[columnCount];
-                result[dimIndex] = name;
-                result[periodIndex] = toDate.apply(o.getPeriod());
-                result[valueIndex] = o.getValue();
-                result[versionIndex] = version;
-                return result;
-            }
-        };
-    }
-
-    private static void writeContent(Table table, BiFunction<String, TsObservation, Object[]> toRow, TsCollectionInformation col, int threshold) throws IOException {
-        List<Object[]> bulk = new ArrayList<>();
-        for (TsInformation ts : col.items) {
-            if (ts.hasData() && ts.data != null) {
-                FluentIterable.from(ts.data).transform(asFunction(toRow, ts.name)).copyInto(bulk);
-                if (bulk.size() > threshold) {
-                    table.addRows(bulk);
-                    bulk.clear();
-                }
-            }
-        }
-        if (!bulk.isEmpty()) {
-            table.addRows(bulk);
-        }
-    }
-
-    @NextJdk("")
-    private interface BiFunction<T, U, R> {
-
-        R apply(T t, U u);
-    }
-
-    private static <T, U, R> Function<U, R> asFunction(final BiFunction<T, U, R> biFunc, final T t) {
-        return new Function<U, R>() {
-            @Override
-            public R apply(U input) {
-                return biFunc.apply(t, input);
-            }
-        };
-    }
-
-    private enum TsPeriodDateFunc implements Function<TsPeriod, Date> {
-        FIRST {
-            @Override
-            public Date apply(TsPeriod input) {
-                return input.firstday().getTime();
-            }
-        }, LAST {
-            @Override
-            public Date apply(TsPeriod input) {
-                return input.lastday().getTime();
-            }
-        }
-    }
-
-    @Deprecated
-    private static final class ShowInFolderActionListener implements ActionListener {
-
-        private final File file;
-
-        public ShowInFolderActionListener(File file) {
-            this.file = file;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Desktop desktop = DesktopManager.get();
-            if (desktop.isSupported(Desktop.Action.SHOW_IN_FOLDER)) {
-                try {
-                    desktop.showInFolder(file);
-                } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-            }
+            ph.progress("Writing file");
+            JackcessTsExport.writeContent(table, rowFunc, content, 10000);
         }
     }
 
@@ -280,18 +129,6 @@ public final class JackcessTsSave extends AbstractNamedService implements ITsSav
         }
     }
 
-    private static final class SaveSelectionApprover implements FileChooserBuilder.SelectionApprover {
-
-        @Override
-        public boolean approve(File[] selection) {
-            return selection.length != 0;
-        }
-    }
-
-    public enum WriteOption {
-        APPEND, TRUNCATE_EXISTING;
-    }
-
     public static final class OptionsBean {
 
         public String tableName = "TimeSeries";
@@ -300,39 +137,30 @@ public final class JackcessTsSave extends AbstractNamedService implements ITsSav
         public String valueColumn = "Value";
         public String versionColumn = "";
 
-        public WriteOption writeOption = WriteOption.TRUNCATE_EXISTING;
+        public JackcessTsExport.WriteOption writeOption = JackcessTsExport.WriteOption.TRUNCATE_EXISTING;
         public Database.FileFormat fileFormat = Database.FileFormat.V2010;
         public boolean beginPeriod = true;
     }
 
-    private static final class OptionsEditor implements IBeanEditor {
+    private static Sheet getSheet(OptionsBean bean) {
+        Sheet result = new Sheet();
+        NodePropertySetBuilder b = new NodePropertySetBuilder();
 
-        private Sheet getSheet(OptionsBean bean) {
-            Sheet result = new Sheet();
-            NodePropertySetBuilder b = new NodePropertySetBuilder();
+        b.reset("Target");
+        b.with(String.class).selectField(bean, "tableName").display("Table name").add();
+        b.with(String.class).selectField(bean, "dimColumn").display("Dimension column").add();
+        b.with(String.class).selectField(bean, "periodColumn").display("Period column").add();
+        b.with(String.class).selectField(bean, "valueColumn").display("Value column").add();
+        b.with(String.class).selectField(bean, "versionColumn").display("Version column").add();
+        result.put(b.build());
 
-            b.reset("Target");
-            b.with(String.class).selectField(bean, "tableName").display("Table name").add();
-            b.with(String.class).selectField(bean, "dimColumn").display("Dimension column").add();
-            b.with(String.class).selectField(bean, "periodColumn").display("Period column").add();
-            b.with(String.class).selectField(bean, "valueColumn").display("Value column").add();
-            b.with(String.class).selectField(bean, "versionColumn").display("Version column").add();
-            result.put(b.build());
+        b.reset("Options");
+        b.withEnum(JackcessTsExport.WriteOption.class).selectField(bean, "writeOption").display("Write option").add();
+        b.withEnum(Database.FileFormat.class).selectField(bean, "fileFormat").display("File format").add();
+        b.withBoolean().selectField(bean, "beginPeriod").display("Begin period").add();
+        result.put(b.build());
 
-            b.reset("Options");
-            b.withEnum(WriteOption.class).selectField(bean, "writeOption").display("Write option").add();
-            b.withEnum(Database.FileFormat.class).selectField(bean, "fileFormat").display("File format").add();
-            b.withBoolean().selectField(bean, "beginPeriod").display("Begin period").add();
-            result.put(b.build());
-
-            return result;
-        }
-
-        @Override
-        final public boolean editBean(Object bean) {
-            OptionsBean config = (OptionsBean) bean;
-            return OpenIdePropertySheetBeanEditor.editSheet(getSheet(config), "Options", null);
-        }
+        return result;
     }
     //</editor-fold>
 }
