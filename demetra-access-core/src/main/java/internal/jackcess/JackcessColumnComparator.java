@@ -14,9 +14,8 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.jackcess;
+package internal.jackcess;
 
-import com.google.common.primitives.Ints;
 import com.healthmarketscience.jackcess.Column;
 import java.util.Comparator;
 
@@ -29,7 +28,7 @@ public enum JackcessColumnComparator implements Comparator<Column> {
     BY_COLUMN_INDEX {
         @Override
         public int compare(Column o1, Column o2) {
-            return Ints.compare(o1.getColumnIndex(), o2.getColumnIndex());
+            return Integer.compare(o1.getColumnIndex(), o2.getColumnIndex());
         }
     };
 }

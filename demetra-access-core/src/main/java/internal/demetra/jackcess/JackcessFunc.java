@@ -14,9 +14,9 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.demetra.access;
+package internal.demetra.jackcess;
 
-import be.nbb.jackcess.JackcessResultSet;
+import internal.jackcess.JackcessResultSet;
 import com.healthmarketscience.jackcess.Column;
 import ec.tss.tsproviders.db.DbUtil;
 import ec.tss.tsproviders.utils.IParser;
@@ -27,37 +27,28 @@ import javax.annotation.Nullable;
 /**
  *
  * @author Philippe Charles
+ * @param <T>
  */
-abstract class JackcessFunc<T> implements DbUtil.Func<JackcessResultSet, T, IOException> {
+public interface JackcessFunc<T> extends DbUtil.Func<JackcessResultSet, T, IOException> {
 
     @Nonnull
-    public static JackcessFunc<String[]> onGetStringArray(final int index, final int length) {
-        return new JackcessFunc<String[]>() {
-            @Override
-            public String[] apply(JackcessResultSet rs) throws IOException {
-                return getStringArray(rs, index, length);
-            }
-        };
+    public static JackcessFunc<String> onNull() {
+        return NullFunc.INSTANCE;
     }
 
     @Nonnull
-    public static JackcessFunc<String> onGetObjectToString(final int index) {
-        return new JackcessFunc<String>() {
-            @Override
-            public String apply(JackcessResultSet rs) throws IOException {
-                return getObjectToString(rs, index);
-            }
-        };
+    public static JackcessFunc<String[]> onGetStringArray(int index, int length) {
+        return rs -> getStringArray(rs, index, length);
     }
 
     @Nonnull
-    public static <X> JackcessFunc<X> compose(final int index, final IParser<X> parser) {
-        return new JackcessFunc<X>() {
-            @Override
-            public X apply(JackcessResultSet rs) throws IOException {
-                return getAndParse(rs, index, parser);
-            }
-        };
+    public static JackcessFunc<String> onGetObjectToString(int index) {
+        return rs -> getObjectToString(rs, index);
+    }
+
+    @Nonnull
+    public static <X> JackcessFunc<X> compose(int index, IParser<X> parser) {
+        return rs -> getAndParse(rs, index, parser);
     }
 
     @Nonnull
@@ -73,12 +64,22 @@ abstract class JackcessFunc<T> implements DbUtil.Func<JackcessResultSet, T, IOEx
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
+    static final class NullFunc implements JackcessFunc<String> {
+
+        static final JackcessFunc<String> INSTANCE = new NullFunc();
+
+        @Override
+        public String apply(JackcessResultSet input) throws IOException {
+            return null;
+        }
+    }
+
     @Nullable
-    private static String toString(@Nullable Object o) {
+    static String toString(@Nullable Object o) {
         return o != null ? o.toString() : null;
     }
 
-    private static String[] getStringArray(JackcessResultSet rs, int index, int length) throws IOException {
+    static String[] getStringArray(JackcessResultSet rs, int index, int length) throws IOException {
         String[] result = new String[length];
         for (int i = 0; i < result.length; i++) {
             result[i] = toString(rs.getValue(index + i));
@@ -86,46 +87,36 @@ abstract class JackcessFunc<T> implements DbUtil.Func<JackcessResultSet, T, IOEx
         return result;
     }
 
-    private static String getObjectToString(JackcessResultSet rs, int index) throws IOException {
+    static String getObjectToString(JackcessResultSet rs, int index) throws IOException {
         return toString(rs.getValue(index));
     }
 
-    private static <X> X getAndParse(JackcessResultSet rs, int index, IParser<X> parser) throws IOException {
+    static <X> X getAndParse(JackcessResultSet rs, int index, IParser<X> parser) throws IOException {
         return parser.parse(getObjectToString(rs, index));
     }
 
-    private static <X> X getAndCast(JackcessResultSet rs, int index) throws IOException {
+    static <X> X getAndCast(JackcessResultSet rs, int index) throws IOException {
         return (X) rs.getValue(index);
     }
 
     @Nullable
-    private static JackcessFunc<java.util.Date> dateByDataType(Column column, final int index) {
+    static JackcessFunc<java.util.Date> dateByDataType(Column column, final int index) {
         switch (column.getType()) {
             case SHORT_DATE_TIME:
-                return new JackcessFunc<java.util.Date>() {
-                    @Override
-                    public java.util.Date apply(JackcessResultSet o) throws IOException {
-                        return getAndCast(o, index);
-                    }
-                };
+                return rs -> getAndCast(rs, index);
         }
         return null;
     }
 
     @Nullable
-    private static JackcessFunc<Number> numberByDataType(Column column, final int index) {
+    static JackcessFunc<Number> numberByDataType(Column column, final int index) {
         switch (column.getType()) {
             case DOUBLE:
             case FLOAT:
             case INT:
             case LONG:
             case NUMERIC:
-                return new JackcessFunc<Number>() {
-                    @Override
-                    public Number apply(JackcessResultSet o) throws IOException {
-                        return getAndCast(o, index);
-                    }
-                };
+                return rs -> getAndCast(rs, index);
         }
         return null;
     }

@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.jackcess;
+package internal.jackcess;
 
 import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.Column;

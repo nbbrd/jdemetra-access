@@ -16,19 +16,18 @@
  */
 package be.nbb.demetra.access;
 
-import com.google.common.collect.Lists;
-import com.healthmarketscience.jackcess.Column;
-import com.healthmarketscience.jackcess.Database;
-import com.healthmarketscience.jackcess.DatabaseBuilder;
-import ec.nbdemetra.db.DbColumnListCellRenderer;
-import ec.nbdemetra.db.DbIcon;
+import internal.demetra.jackcess.JackcessColumnRenderer;
 import ec.nbdemetra.db.DbProviderBuddy;
 import ec.nbdemetra.ui.tsproviders.IDataSourceProviderBuddy;
+import ec.tss.tsproviders.TsProviders;
+import ec.tstoolkit.utilities.GuavaCaches;
 import ec.util.completion.AutoCompletionSource;
-import ec.util.completion.AutoCompletionSource.Behavior;
-import ec.util.completion.ext.QuickAutoCompletionSource;
+import ec.util.completion.AutoCompletionSources;
+import internal.demetra.jackcess.JackcessAutoCompletion;
 import java.awt.Image;
-import javax.swing.Icon;
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
 import javax.swing.ListCellRenderer;
 import org.openide.util.ImageUtilities;
 import org.openide.util.lookup.ServiceProvider;
@@ -37,8 +36,15 @@ import org.openide.util.lookup.ServiceProvider;
  *
  * @author Philippe Charles
  */
+@Deprecated
 @ServiceProvider(service = IDataSourceProviderBuddy.class)
-public class JackcessProviderBuddy extends DbProviderBuddy<JackcessBean> {
+public final class JackcessProviderBuddy extends DbProviderBuddy<JackcessBean> {
+
+    private final ConcurrentMap autoCompletionCache;
+
+    public JackcessProviderBuddy() {
+        this.autoCompletionCache = GuavaCaches.ttlCacheAsMap(Duration.ofMinutes(1));
+    }
 
     @Override
     protected boolean isFile() {
@@ -57,96 +63,24 @@ public class JackcessProviderBuddy extends DbProviderBuddy<JackcessBean> {
 
     @Override
     protected AutoCompletionSource getTableSource(JackcessBean bean) {
-        return new JackcessAutoCompletionSource<String>(bean) {
-            @Override
-            protected Iterable<String> getAllValues(Database database) throws Exception {
-                return database.getTableNames();
-            }
-        };
+        return lookupProvider()
+                .map(o -> JackcessAutoCompletion.onTables(o, bean::getFile, autoCompletionCache))
+                .orElseGet(AutoCompletionSources::empty);
     }
 
     @Override
     protected AutoCompletionSource getColumnSource(JackcessBean bean) {
-        return new JackcessAutoCompletionSource<Column>(bean) {
-            @Override
-            protected Iterable<Column> getAllValues(Database database) throws Exception {
-                return Lists.newArrayList(database.getTable(bean.getTableName()).getColumns());
-            }
-
-            @Override
-            protected String getValueAsString(Column value) {
-                return value.getName();
-            }
-        };
+        return lookupProvider()
+                .map(o -> JackcessAutoCompletion.onColumns(o, bean::getFile, bean::getTableName, autoCompletionCache))
+                .orElseGet(AutoCompletionSources::empty);
     }
 
     @Override
     protected ListCellRenderer getColumnRenderer(JackcessBean bean) {
-        return new DbColumnListCellRenderer<Column>() {
-            @Override
-            protected String getName(Column value) {
-                return value.getName();
-            }
-
-            @Override
-            protected String getTypeName(Column value) {
-                return value.getType().name();
-            }
-
-            @Override
-            protected Icon getTypeIcon(Column value) {
-                switch (value.getType()) {
-                    case BINARY:
-                        return DbIcon.DATA_TYPE_BINARY;
-                    case BOOLEAN:
-                        return DbIcon.DATA_TYPE_BOOLEAN;
-                    case BYTE:
-                    case INT:
-                    case LONG:
-                    case NUMERIC:
-                    case DOUBLE:
-                    case FLOAT:
-                        return DbIcon.DATA_TYPE_DOUBLE;
-                    case SHORT_DATE_TIME:
-                        return DbIcon.DATA_TYPE_DATETIME;
-                    case TEXT:
-                        return DbIcon.DATA_TYPE_STRING;
-                    case MEMO:
-                    case COMPLEX_TYPE:
-                    case GUID:
-                    case MONEY:
-                    case OLE:
-                    case UNKNOWN_0D:
-                    case UNKNOWN_11:
-                    case UNSUPPORTED_FIXEDLEN:
-                    case UNSUPPORTED_VARLEN:
-                        return DbIcon.DATA_TYPE_NULL;
-                }
-                return null;
-            }
-        };
+        return new JackcessColumnRenderer();
     }
 
-    static abstract class JackcessAutoCompletionSource<T> extends QuickAutoCompletionSource<T> {
-
-        final JackcessBean bean;
-
-        JackcessAutoCompletionSource(JackcessBean bean) {
-            this.bean = bean;
-        }
-
-        abstract protected Iterable<T> getAllValues(Database database) throws Exception;
-
-        @Override
-        protected Iterable<T> getAllValues() throws Exception {
-            try (Database database = new DatabaseBuilder(bean.getFile()).setReadOnly(true).open()) {
-                return getAllValues(database);
-            }
-        }
-
-        @Override
-        public Behavior getBehavior(String term) {
-            return Behavior.ASYNC;
-        }
+    private static Optional<JackcessProvider> lookupProvider() {
+        return TsProviders.lookup(JackcessProvider.class, JackcessProvider.NAME).toJavaUtil();
     }
 }

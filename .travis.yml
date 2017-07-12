@@ -1,5 +1,24 @@
 language: java
-jdk:
-  - openjdk7
-  - oraclejdk7
-  - oraclejdk8
+jdk: oraclejdk8
+sudo: required
+
+cache:
+  directories:
+    - $HOME/.m2
+
+addons:
+  srcclr: true
+
+deploy:
+  - provider: script
+    script: mvn deploy -Dmaven.test.skip -s .travis.settings.xml -P deploy-snapshots
+    skip_cleanup: true
+    on:
+      branch: develop
+      condition: $TRAVIS_PULL_REQUEST = "false"
+  - provider: script
+    script: mvn deploy -Dmaven.test.skip -s .travis.settings.xml -P deploy-releases
+    skip_cleanup: true
+    on:
+      branch: master
+      condition: $TRAVIS_PULL_REQUEST = "false"

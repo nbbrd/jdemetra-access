@@ -14,18 +14,14 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.xdb;
+package internal.xdb;
 
 import com.google.common.base.Equivalence;
-import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.UnsignedBytes;
 import ec.tstoolkit.utilities.CheckedIterator;
-import ec.tstoolkit.utilities.NextJdk;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -34,17 +30,18 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 /**
  *
  * @author Philippe Charles
  */
-public final class DbRawDataUtil {
-
-    private DbRawDataUtil() {
-        // static class
-    }
+@lombok.experimental.UtilityClass
+public class DbRawDataUtil {
 
     public enum SuperDataType implements Comparator<Object> {
 
@@ -68,20 +65,8 @@ public final class DbRawDataUtil {
         };
     }
 
-    @NextJdk("")
-    public interface BiConsumer<T, U> {
-
-        void accept(T t, U u);
-    }
-
-    @NextJdk("")
-    public interface ToIntFunction<T> {
-
-        int applyAsInt(T value);
-    }
-
     @Nonnull
-    public static <C> int[] createIndexes(@Nonnull List<C> selectColumns, @Nonnull ToIntFunction<C> toIndex) {
+    public <C> int[] createIndexes(@Nonnull List<C> selectColumns, @Nonnull ToIntFunction<C> toIndex) {
         int[] result = new int[selectColumns.size()];
         for (int i = 0; i < result.length; i++) {
             result[i] = toIndex.applyAsInt(selectColumns.get(i));
@@ -91,14 +76,14 @@ public final class DbRawDataUtil {
 
     @Nonnull
     @SuppressWarnings("null")
-    public static <C, T extends Throwable> CheckedIterator<Object[], T> distinct(
+    public <C, T extends Throwable> CheckedIterator<Object[], T> distinct(
             @Nonnull CheckedIterator<Object[], T> rows,
             @Nonnull List<C> selectColumns,
             @Nonnull ToIntFunction<C> toIndex,
             @Nonnull Function<C, SuperDataType> toDataType,
             @Nonnull BiConsumer<Object[], Object[]> aggregator) throws T {
 
-        TreeMap<Object[], Object[]> result = Maps.newTreeMap(newRowOrdering(selectColumns, toIndex, toDataType));
+        TreeMap<Object[], Object[]> result = new TreeMap<>(newRowOrdering(selectColumns, toIndex, toDataType));
         Equivalence<Object[]> equivalence = newRowEquivalence(selectColumns, toIndex);
         Object[] first = null;
         while (rows.hasNext()) {
@@ -120,7 +105,7 @@ public final class DbRawDataUtil {
     }
 
     @Nonnull
-    public static <C, T extends Throwable> CheckedIterator<Object[], T> sort(
+    public <C, T extends Throwable> CheckedIterator<Object[], T> sort(
             @Nonnull CheckedIterator<Object[], T> rows,
             @Nonnull List<C> orderColumns,
             @Nonnull ToIntFunction<C> toIndex,
@@ -132,7 +117,7 @@ public final class DbRawDataUtil {
     }
 
     @Nonnull
-    public static <C> boolean isSortRequired(boolean distinct, @Nonnull List<C> selectColumns, @Nonnull List<C> orderColumns) {
+    public <C> boolean isSortRequired(boolean distinct, @Nonnull List<C> selectColumns, @Nonnull List<C> orderColumns) {
         return !orderColumns.isEmpty() && !(distinct && Iterables.elementsEqual(selectColumns, orderColumns));
     }
 
@@ -174,15 +159,14 @@ public final class DbRawDataUtil {
         }
     }
 
-    private static <C> Equivalence<Object[]> newRowEquivalence(List<C> selectColumns, ToIntFunction<C> index) {
-        return new DbRawDataUtil.ArrayEquivalence(createIndexes(selectColumns, index));
+    private <C> Equivalence<Object[]> newRowEquivalence(List<C> selectColumns, ToIntFunction<C> index) {
+        return new ArrayEquivalence(createIndexes(selectColumns, index));
     }
 
-    private static <C> Ordering<Object[]> newRowOrdering(List<C> orderColumns, ToIntFunction<C> toIndex, Function<C, SuperDataType> toDataType) {
-        List<Comparator<Object[]>> result = Lists.newArrayListWithExpectedSize(orderColumns.size());
-        for (C o : orderColumns) {
-            result.add(new DbRawDataUtil.ArrayItemComparator(toIndex.applyAsInt(o), toDataType.apply(o)));
-        }
+    private <C> Comparator<Object[]> newRowOrdering(List<C> orderColumns, ToIntFunction<C> toIndex, Function<C, SuperDataType> toDataType) {
+        List<Comparator<Object[]>> result = orderColumns.stream()
+                .map(o -> new ArrayItemComparator(toIndex.applyAsInt(o), toDataType.apply(o)))
+                .collect(Collectors.toList());
         return Ordering.compound(result);
     }
 

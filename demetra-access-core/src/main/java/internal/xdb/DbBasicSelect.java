@@ -14,19 +14,17 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package be.nbb.xdb;
+package internal.xdb;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import ec.tstoolkit.design.IBuilder;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
@@ -39,11 +37,11 @@ public final class DbBasicSelect {
 
     private final String tableName;
     private final boolean distinct;
-    private final ImmutableList<String> selectColumns;
-    private final ImmutableMap<String, String> filterItems;
-    private final ImmutableList<String> orderColumns;
+    private final List<String> selectColumns;
+    private final Map<String, String> filterItems;
+    private final List<String> orderColumns;
 
-    private DbBasicSelect(String tableName, boolean distinct, ImmutableList<String> selectColumns, ImmutableMap<String, String> filterItems, ImmutableList<String> orderColumns) {
+    private DbBasicSelect(String tableName, boolean distinct, List<String> selectColumns, Map<String, String> filterItems, List<String> orderColumns) {
         this.tableName = tableName;
         this.distinct = distinct;
         this.selectColumns = selectColumns;
@@ -116,17 +114,17 @@ public final class DbBasicSelect {
 
         private final String tableName;
         private boolean distinct = false;
-        private final List<String> select = Lists.newArrayList();
-        private final Map<String, String> filterItems = Maps.newHashMap();
-        private final List<String> order = Lists.newArrayList();
+        private final List<String> select = new ArrayList<>();
+        private final Map<String, String> filterItems = new HashMap<>();
+        private final List<String> order = new ArrayList<>();
 
         private Builder(String tableName) {
-            this.tableName = Preconditions.checkNotNull(tableName);
+            this.tableName = Objects.requireNonNull(tableName);
         }
 
         private Builder addIfNotNullOrEmpty(List<String> list, String... values) {
             for (String o : values) {
-                if (!Strings.isNullOrEmpty(o)) {
+                if (o != null && !o.isEmpty()) {
                     list.add(o);
                 }
             }
@@ -158,9 +156,32 @@ public final class DbBasicSelect {
         @Override
         public DbBasicSelect build() {
             return new DbBasicSelect(tableName, distinct,
-                    ImmutableList.copyOf(select),
-                    ImmutableMap.copyOf(filterItems),
-                    ImmutableList.copyOf(order));
+                    immmutableCopyOf(select),
+                    immmutableCopyOf(filterItems),
+                    immmutableCopyOf(order));
+        }
+
+        private static <X> List<X> immmutableCopyOf(List<X> input) {
+            switch (input.size()) {
+                case 0:
+                    return Collections.emptyList();
+                case 1:
+                    return Collections.singletonList(input.get(0));
+                default:
+                    return Collections.unmodifiableList(new ArrayList(input));
+            }
+        }
+
+        private static <K, V> Map<K, V> immmutableCopyOf(Map<K, V> input) {
+            switch (input.size()) {
+                case 0:
+                    return Collections.emptyMap();
+                case 1:
+                    Map.Entry<K, V> single = input.entrySet().iterator().next();
+                    return Collections.singletonMap(single.getKey(), single.getValue());
+                default:
+                    return Collections.unmodifiableMap(new HashMap(input));
+            }
         }
     }
 }
