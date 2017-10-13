@@ -2,48 +2,20 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>be.nbb.demetra</groupId>
+    <parent>
+        <groupId>be.nbb.demetra</groupId>
+        <artifactId>demetra-access-parent</artifactId>
+        <version>2.2.1-SNAPSHOT</version>
+    </parent>
+
     <artifactId>demetra-access-core</artifactId>
-    <version>2.2.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     
-    <name>Demetra - Access - Core</name>
-    <description>A pure java library for reading time series from MS Access databases.</description>
-    <url>https://github.com/nbbrd/jdemetra-access</url>
-    
-    <organization>
-        <name>National Bank of Belgium</name>
-    </organization>
-
-    <licenses>
-        <license>
-            <name>European Union Public Licence (EUPL)</name>
-            <url>https://joinup.ec.europa.eu/software/page/eupl/licence-eupl</url>
-        </license>
-    </licenses>
+    <name>Demetra - Access - Core</name>    
     
     <properties>
-        <!-- build -->
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven-source-plugin.version>2.4</maven-source-plugin.version>
-        <jacoco-maven-plugin.version>0.7.9</jacoco-maven-plugin.version>
-        <!-- dependencies -->
-        <demetra.version>2.2.0</demetra.version>
         <jackcess.version>2.1.8</jackcess.version>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>netbeans-releases</id>
-            <url>http://bits.netbeans.org/maven2/</url>
-        </repository>        
-        <repository>
-            <id>joinup-releases</id>
-            <url>https://joinup.ec.europa.eu/nexus/content/repositories/releases/</url>
-        </repository>
-    </repositories>
                 
     <dependencyManagement>
         <dependencies>
@@ -137,78 +109,5 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
             </plugin>
         </plugins>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>${maven-source-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <id>attach-sources</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>${jacoco-maven-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>prepare-agent</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>report</id>
-                            <phase>prepare-package</phase>
-                            <goals>
-                                <goal>report</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
     </build>
-    
-    <profiles>
-        <profile>
-            <id>deploy-snapshots</id>
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>oss-jfrog-artifactory</id>
-                    <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
-                </snapshotRepository>
-            </distributionManagement>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>deploy-releases</id>
-            <distributionManagement>
-                <repository>
-                    <id>oss-jfrog-artifactory</id>
-                    <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
-                </repository>
-            </distributionManagement>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
