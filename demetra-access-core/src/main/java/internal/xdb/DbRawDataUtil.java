@@ -24,17 +24,24 @@ import com.google.common.primitives.UnsignedBytes;
 import ec.tstoolkit.utilities.CheckedIterator;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+import lombok.AccessLevel;
 
 /**
  *
@@ -73,6 +80,51 @@ public class DbRawDataUtil {
         }
         return result;
     }
+
+    @Nonnull
+    public <C> List<C> getColumns(@Nonnull Function<String, C> toColumn, @Nonnull Collection<String> columns) {
+        return columns.stream().map(toColumn).collect(Collectors.toList());
+    }
+
+    @Nonnull
+    public <C> SortedSet<C> mergeAndSort(@Nonnull ToIntFunction<C> toInternalIndex, @Nonnull Collection<C>... columns) {
+        return Stream.of(columns)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparingInt(toInternalIndex))));
+    }
+
+    @Nonnull
+    public <C> SortedMap<C, String> getFilter(@Nonnull ToIntFunction<C> toInternalIndex, @Nonnull Function<String, C> toColumn, @Nonnull Map<String, String> filterItems) {
+        SortedMap<C, String> result = new TreeMap<>(Comparator.comparingInt(toInternalIndex));
+        filterItems.forEach((k, v) -> result.put(toColumn.apply(k), v));
+        return result;
+    }
+
+    @lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class ToIndex<C> implements ToIntFunction<C> {
+
+        @Nonnull
+        public static <C> ToIndex<C> of(@Nonnull ToIntFunction<C> toInternalIndex, @Nonnull SortedSet<C> dataColumns) {
+            C max = Collections.max(dataColumns, Comparator.comparingInt(toInternalIndex));
+            int[] index = new int[toInternalIndex.applyAsInt(max) + 1];
+            int i = 0;
+            for (C column : dataColumns) {
+                index[toInternalIndex.applyAsInt(column)] = i++;
+            }
+            return new ToIndex<>(toInternalIndex, index);
+        }
+
+        private final ToIntFunction<C> toInternalIndex;
+        private final int[] index;
+
+        @Override
+        public int applyAsInt(C value) {
+            return index[toInternalIndex.applyAsInt(value)];
+        }
+    }
+
+    public static final BiConsumer<Object[], Object[]> NO_AGGREGATION = (l, r) -> {
+    };
 
     @Nonnull
     @SuppressWarnings("null")
