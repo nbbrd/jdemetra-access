@@ -24,7 +24,7 @@ import com.healthmarketscience.jackcess.Column;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.RowId;
 import com.healthmarketscience.jackcess.Table;
-import ec.tstoolkit.utilities.CheckedIterator;
+import ec.tss.tsproviders.utils.IteratorWithIO;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
@@ -73,7 +73,7 @@ public final class JackcessStatement implements Closeable {
         log.debug("Query : '{}'", query);
 
         Stopwatch sw = Stopwatch.createStarted();
-        CheckedIterator<Object[], IOException> rows = getRows(input, dataColumns, filter, toColumnNames(query));
+        IteratorWithIO<Object[]> rows = getRows(input, dataColumns, filter, toColumnNames(query));
         log.debug("Iterator done in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
         if (query.isDistinct()) {
@@ -97,7 +97,7 @@ public final class JackcessStatement implements Closeable {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private CheckedIterator<Object[], IOException> getRows(Table input, SortedSet<Column> dataColumns, SortedMap<Column, String> filter, Collection<String> columnNames) throws IOException {
+    private IteratorWithIO<Object[]> getRows(Table input, SortedSet<Column> dataColumns, SortedMap<Column, String> filter, Collection<String> columnNames) throws IOException {
         return new Adapter(
                 CursorFacade.range(input, columnNames, range).withFilter(filter),
                 dataColumns
@@ -157,7 +157,7 @@ public final class JackcessStatement implements Closeable {
         }
     }
 
-    private static final class Adapter extends CheckedIterator<Object[], IOException> {
+    private static final class Adapter implements IteratorWithIO<Object[]> {
 
         private final CursorFacade cursor;
         private final Column[] dataColumns;
@@ -180,6 +180,10 @@ public final class JackcessStatement implements Closeable {
             }
             result[dataColumns.length] = result[dataColumns.length + 1] = cursor.getRowId();
             return result;
+        }
+
+        @Override
+        public void close() throws IOException {
         }
     }
     //</editor-fold>

@@ -19,7 +19,7 @@ package internal.jackcess;
 import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.Column;
 import com.healthmarketscience.jackcess.RowId;
-import ec.tstoolkit.utilities.CheckedIterator;
+import ec.tss.tsproviders.utils.IteratorWithIO;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
@@ -34,10 +34,10 @@ public final class JackcessResultSet implements Closeable {
 
     private final List<Column> columns;
     private final int[] indexes;
-    private final CheckedIterator<Object[], IOException> rows;
+    private final IteratorWithIO<Object[]> rows;
     private Object[] currentRow = null;
 
-    JackcessResultSet(@Nonnull List<Column> columns, @Nonnull int[] indexes, @Nonnull CheckedIterator<Object[], IOException> data) {
+    JackcessResultSet(@Nonnull List<Column> columns, @Nonnull int[] indexes, @Nonnull IteratorWithIO<Object[]> data) {
         this.columns = columns;
         this.indexes = indexes;
         this.rows = data;
@@ -70,5 +70,6 @@ public final class JackcessResultSet implements Closeable {
 
     @Override
     public void close() throws IOException {
+        rows.close();
     }
 }

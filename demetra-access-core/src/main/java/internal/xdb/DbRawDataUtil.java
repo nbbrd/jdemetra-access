@@ -18,18 +18,16 @@ package internal.xdb;
 
 import com.google.common.base.Equivalence;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.UnsignedBytes;
-import ec.tstoolkit.utilities.CheckedIterator;
-import java.util.Arrays;
+import ec.tss.tsproviders.utils.IteratorWithIO;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -128,12 +126,12 @@ public class DbRawDataUtil {
 
     @Nonnull
     @SuppressWarnings("null")
-    public <C, T extends Throwable> CheckedIterator<Object[], T> distinct(
-            @Nonnull CheckedIterator<Object[], T> rows,
+    public <C> IteratorWithIO<Object[]> distinct(
+            @Nonnull IteratorWithIO<Object[]> rows,
             @Nonnull List<C> selectColumns,
             @Nonnull ToIntFunction<C> toIndex,
             @Nonnull Function<C, SuperDataType> toDataType,
-            @Nonnull BiConsumer<Object[], Object[]> aggregator) throws T {
+            @Nonnull BiConsumer<Object[], Object[]> aggregator) throws IOException {
 
         TreeMap<Object[], Object[]> result = new TreeMap<>(newRowOrdering(selectColumns, toIndex, toDataType));
         Equivalence<Object[]> equivalence = newRowEquivalence(selectColumns, toIndex);
@@ -153,19 +151,19 @@ public class DbRawDataUtil {
                 aggregator.accept(first, current);
             }
         }
-        return new SizedCheckedIterator(result.keySet());
+        return IteratorWithIO.from(result.keySet().iterator());
     }
 
     @Nonnull
-    public <C, T extends Throwable> CheckedIterator<Object[], T> sort(
-            @Nonnull CheckedIterator<Object[], T> rows,
+    public <C> IteratorWithIO<Object[]> sort(
+            @Nonnull IteratorWithIO<Object[]> rows,
             @Nonnull List<C> orderColumns,
             @Nonnull ToIntFunction<C> toIndex,
-            @Nonnull Function<C, SuperDataType> toDataType) throws T {
+            @Nonnull Function<C, SuperDataType> toDataType) throws IOException {
 
-        Object[][] tmp = rows.toArray(Object[].class);
-        Arrays.sort(tmp, newRowOrdering(orderColumns, toIndex, toDataType));
-        return new SizedCheckedIterator<>(tmp);
+        List<Object[]> tmp = toList(rows);
+        tmp.sort(newRowOrdering(orderColumns, toIndex, toDataType));
+        return IteratorWithIO.from(tmp.iterator());
     }
 
     @Nonnull
@@ -174,41 +172,12 @@ public class DbRawDataUtil {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static final class SizedCheckedIterator<T extends Throwable> extends CheckedIterator<Object[], T> {
-
-        private final Iterator<Object[]> iterator;
-        private int remaining;
-
-        public SizedCheckedIterator(Object[][] set) {
-            this.iterator = Iterators.forArray(set);
-            this.remaining = set.length;
+    static List<Object[]> toList(IteratorWithIO<Object[]> iterator) throws IOException {
+        List<Object[]> result = new ArrayList<>();
+        while (iterator.hasNext()) {
+            result.add(iterator.next());
         }
-
-        public SizedCheckedIterator(Collection<Object[]> set) {
-            this.iterator = set.iterator();
-            this.remaining = set.size();
-        }
-
-        @Override
-        public boolean hasNext() throws T {
-            return iterator.hasNext();
-        }
-
-        @Override
-        public Object[] next() throws T, NoSuchElementException {
-            remaining--;
-            return iterator.next();
-        }
-
-        @Override
-        public Object[][] toArray(Class<Object[]> type) throws T {
-            Object[][] result = new Object[remaining][];
-            int i = 0;
-            while (hasNext()) {
-                result[i++] = next();
-            }
-            return result;
-        }
+        return result;
     }
 
     private <C> Equivalence<Object[]> newRowEquivalence(List<C> selectColumns, ToIntFunction<C> index) {
