@@ -17,7 +17,6 @@
 package be.nbb.demetra.access.file;
 
 import be.nbb.demetra.access.JackcessFileFilter;
-import com.google.common.cache.Cache;
 import ec.tss.ITsProvider;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
@@ -39,6 +38,7 @@ import internal.demetra.jackcess.JackcessTableAsCubeResource;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.concurrent.ConcurrentMap;
 import org.openide.util.lookup.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,15 +75,15 @@ public final class AccessFileProvider implements IFileLoader {
 
     public AccessFileProvider() {
         Logger logger = LoggerFactory.getLogger(NAME);
-        Cache<DataSource, CubeAccessor> cache = GuavaCaches.softValuesCache();
+        ConcurrentMap<DataSource, CubeAccessor> cache = GuavaCaches.softValuesCacheAsMap();
         AccessFileParam param = new AccessFileParam.V1();
 
-        this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::invalidate);
+        this.mutableListSupport = HasDataSourceMutableList.of(NAME, logger, cache::remove);
         this.monikerSupport = HasDataMoniker.usingUri(NAME);
         this.beanSupport = HasDataSourceBean.of(NAME, param, param.getVersion());
-        this.filePathSupport = HasFilePaths.of(cache::invalidateAll);
+        this.filePathSupport = HasFilePaths.of(cache::clear);
         this.cubeSupport = CubeSupport.of(new AccessFileCubeResource(cache, param, filePathSupport));
-        this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::invalidateAll);
+        this.tsSupport = CubeSupport.asTsProvider(NAME, logger, cubeSupport, monikerSupport, cache::clear);
 
         this.fileFilter = new JackcessFileFilter();
     }
@@ -103,22 +103,22 @@ public final class AccessFileProvider implements IFileLoader {
         return fileFilter.accept(pathname);
     }
 
+    @lombok.AllArgsConstructor
     private static final class AccessFileCubeResource implements CubeSupport.Resource {
 
-        private final Cache<DataSource, CubeAccessor> cache;
+        private final ConcurrentMap<DataSource, CubeAccessor> cache;
         private final AccessFileParam param;
         private final HasFilePaths paths;
-
-        private AccessFileCubeResource(Cache<DataSource, CubeAccessor> cache, AccessFileParam param, HasFilePaths paths) {
-            this.cache = cache;
-            this.param = param;
-            this.paths = paths;
-        }
 
         @Override
         public CubeAccessor getAccessor(DataSource dataSource) throws IOException, IllegalArgumentException {
             DataSourcePreconditions.checkProvider(AccessFileProvider.NAME, dataSource);
-            return GuavaCaches.getOrThrowIOException(cache, dataSource, () -> load(dataSource));
+            CubeAccessor result = cache.get(dataSource);
+            if (result == null) {
+                result = load(dataSource);
+                cache.put(dataSource, result);
+            }
+            return result;
         }
 
         @Override

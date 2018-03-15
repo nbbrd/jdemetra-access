@@ -18,7 +18,6 @@ package be.nbb.demetra.access.file;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import ec.tss.tsproviders.DataSet;
 import ec.tss.tsproviders.DataSource;
 import ec.tss.tsproviders.cube.CubeId;
@@ -35,6 +34,7 @@ import static ec.tss.tsproviders.utils.Params.onString;
 import static ec.tss.tsproviders.utils.Params.onStringList;
 import java.io.File;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
@@ -58,7 +58,7 @@ interface AccessFileParam extends IParam<DataSource, AccessFileBean> {
 
         private final IParam<DataSource, String> dbName = onString("", "dbName");
         private final IParam<DataSource, String> tableName = onString("", "tableName");
-        private final IParam<DataSource, List<String>> dimColumns = onStringList(ImmutableList.of(), "dimColumns", dimensionSplitter, dimensionJoiner);
+        private final IParam<DataSource, List<String>> dimColumns = onStringList(Collections.emptyList(), "dimColumns", dimensionSplitter, dimensionJoiner);
         private final IParam<DataSource, String> periodColumn = onString("", "periodColumn");
         private final IParam<DataSource, String> valueColumn = onString("", "valueColumn");
         private final IParam<DataSource, DataFormat> dataFormat = onDataFormat(DataFormat.DEFAULT, "locale", "datePattern", "numberPattern");

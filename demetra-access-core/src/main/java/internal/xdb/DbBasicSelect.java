@@ -16,7 +16,6 @@
  */
 package internal.xdb;
 
-import com.google.common.base.Joiner;
 import ec.tstoolkit.design.IBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
@@ -75,13 +76,12 @@ public final class DbBasicSelect {
 
     @Nonnull
     public String toSql() {
-        Joiner joiner = Joiner.on(", ");
         StringBuilder result = new StringBuilder();
         result.append("SELECT ");
         if (distinct) {
             result.append("DISTINCT ");
         }
-        joiner.appendTo(result, selectColumns);
+        result.append(selectColumns.stream().collect(COMMA_JOINER));
         result.append(" FROM ").append(tableName);
         if (!filterItems.isEmpty()) {
             result.append(" WHERE ");
@@ -95,7 +95,7 @@ public final class DbBasicSelect {
         }
         if (!orderColumns.isEmpty()) {
             result.append(" ORDER BY ");
-            joiner.appendTo(result, orderColumns);
+            result.append(orderColumns.stream().collect(COMMA_JOINER));
         }
         return result.toString();
     }
@@ -184,4 +184,6 @@ public final class DbBasicSelect {
             }
         }
     }
+
+    private static final Collector<CharSequence, ?, String> COMMA_JOINER = Collectors.joining(",");
 }
