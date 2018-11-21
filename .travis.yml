@@ -1,6 +1,25 @@
 language: java
 jdk:
   - oraclejdk8
+  - openjdk11
+
+env:
+  global:
+    - DEPLOY_JDK=oraclejdk8
+    - DEPLOY_REPO=nbbrd/jdemetra-access
+    - DEPLOY_BIN=demetra-access-desktop/target/*.nbm
+
+deploy:
+  # Github releases from tags
+  - provider: releases
+    api_key: "${GITHUB_KEY}"
+    skip_cleanup: true
+    file_glob: true
+    file: "${DEPLOY_BIN}"
+    on:
+      tags: true
+      repo: "${DEPLOY_REPO}"
+      condition: $TRAVIS_PULL_REQUEST == "false" && $TRAVIS_JDK_VERSION == $DEPLOY_JDK
 
 cache:
   directories:
@@ -8,22 +27,3 @@ cache:
 
 addons:
   srcclr: true
-
-deploy:
-  # SNAPSHOTS from develop & jdk8
-  - provider: script
-    script: mvn deploy -Dmaven.test.skip -s .travis.settings.xml -P deploy-snapshots
-    skip_cleanup: true
-    on:
-      branch: develop
-      jdk: oraclejdk8
-      condition: $TRAVIS_PULL_REQUEST = "false"
-      
-  # RELEASES from master & jdk8
-  - provider: script
-    script: mvn deploy -Dmaven.test.skip -s .travis.settings.xml -P deploy-releases
-    skip_cleanup: true
-    on:
-      branch: master
-      jdk: oraclejdk8
-      condition: $TRAVIS_PULL_REQUEST = "false"
