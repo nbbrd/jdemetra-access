@@ -35,7 +35,7 @@
         <lombok.version>1.18.4</lombok.version>
 
         <!-- dependencies -->
-        <demetra.version>2.2.0</demetra.version>
+        <demetra.version>2.2.1</demetra.version>
     </properties>
 
     <modules>
