@@ -14,7 +14,7 @@
     <name>Demetra - Access - Core</name>    
     
     <properties>
-        <jackcess.version>2.2.0</jackcess.version>
+        <jackcess.version>2.2.1</jackcess.version>
     </properties>
                 
     <dependencyManagement>
