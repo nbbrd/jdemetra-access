@@ -7,6 +7,6 @@ It currently supports versions 2000-2016 read/write and 97 read-only.
 
 Being a pure Java library, you don't need MS Access installed in order to read Access files.
 
-## Quickstart
+![Browsing web service](https://github.com/nbbrd/jdemetra-access/wiki/assets/browse_file.gif)
 
 See [documentation](https://github.com/nbbrd/jdemetra-access/wiki).
