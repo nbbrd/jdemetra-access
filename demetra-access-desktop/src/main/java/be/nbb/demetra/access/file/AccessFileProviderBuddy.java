@@ -216,18 +216,30 @@ public final class AccessFileProviderBuddy implements IDataSourceProviderBuddy {
                 .description(Bundle.bean_dataFormat_description())
                 .add();
         b.withEnum(TsFrequency.class)
-                .select(bean, "obsGathering", ObsGathering.class, ObsGathering::getFrequency, o -> bean.getObsGathering().withFrequency(o))
+                .select(bean, "obsGathering", ObsGathering.class, ObsGathering::getFrequency, o -> withFrequency(bean.getObsGathering(), o))
                 .name("frequency")
                 .display(Bundle.bean_frequency_display())
                 .description(Bundle.bean_frequency_description())
                 .add();
         b.withEnum(TsAggregationType.class)
-                .select(bean, "obsGathering", ObsGathering.class, ObsGathering::getAggregationType, o -> bean.getObsGathering().withAggregationType(o))
+                .select(bean, "obsGathering", ObsGathering.class, ObsGathering::getAggregationType, o -> withAggregationType(bean.getObsGathering(), o))
                 .name("aggregationType")
                 .display(Bundle.bean_aggregationType_display())
                 .description(Bundle.bean_aggregationType_description())
                 .add();
         return b;
+    }
+
+    private static ObsGathering withFrequency(ObsGathering gathering, TsFrequency o) {
+        return gathering.isSkipMissingValues()
+                ? ObsGathering.excludingMissingValues(o, gathering.getAggregationType())
+                : ObsGathering.includingMissingValues(o, gathering.getAggregationType());
+    }
+
+    private static ObsGathering withAggregationType(ObsGathering gathering, TsAggregationType o) {
+        return gathering.isSkipMissingValues()
+                ? ObsGathering.excludingMissingValues(gathering.getFrequency(), o)
+                : ObsGathering.includingMissingValues(gathering.getFrequency(), o);
     }
 
     @NbBundle.Messages({

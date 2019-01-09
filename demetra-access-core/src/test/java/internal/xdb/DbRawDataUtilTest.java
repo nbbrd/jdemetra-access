@@ -17,9 +17,10 @@
 package internal.xdb;
 
 import com.google.common.collect.Iterators;
+import ec.tss.tsproviders.utils.IteratorWithIO;
+import java.io.IOException;
 import static org.junit.Assert.assertArrayEquals;
 import org.junit.Test;
-import ec.tstoolkit.utilities.CheckedIterator;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,8 +38,8 @@ public final class DbRawDataUtilTest {
 
     private static final Function<Integer, DbRawDataUtil.SuperDataType> TO_DATA_TYPE = o -> DbRawDataUtil.SuperDataType.OTHER;
 
-    private static <T> CheckedIterator<T, RuntimeException> forArray(T... array) {
-        return CheckedIterator.fromIterator(Iterators.forArray(array));
+    private static <T> IteratorWithIO<T> forArray(T... array) {
+        return IteratorWithIO.from(Iterators.forArray(array));
     }
 
     @Test
@@ -48,7 +49,7 @@ public final class DbRawDataUtilTest {
     }
 
     @Test
-    public void testDistinct() {
+    public void testDistinct() throws IOException {
         BiConsumer<Object[], Object[]> aggregator = (t, u) -> t[3] = Math.max((int) t[3], (int) u[3]);
         {
             Object[][] data = {
@@ -62,18 +63,18 @@ public final class DbRawDataUtilTest {
                 {"A", 12.34, null, 2},
                 {"B", 56.78, null, 3}
             };
-            assertArrayEquals(expected, DbRawDataUtil.distinct(forArray(data), selectColumns, TO_INDEX, TO_DATA_TYPE, aggregator).toArray(Object[].class));
+            assertIterEquals(expected, DbRawDataUtil.distinct(forArray(data), selectColumns, TO_INDEX, TO_DATA_TYPE, aggregator));
         }
         {
             Object[][] data = {};
             List<Integer> selectColumns = Collections.emptyList();
             Object[][] expected = {};
-            assertArrayEquals(expected, DbRawDataUtil.distinct(forArray(data), selectColumns, TO_INDEX, TO_DATA_TYPE, aggregator).toArray(Object[].class));
+            assertIterEquals(expected, DbRawDataUtil.distinct(forArray(data), selectColumns, TO_INDEX, TO_DATA_TYPE, aggregator));
         }
     }
 
     @Test
-    public void testSort() {
+    public void testSort() throws IOException {
         {
             Object[][] data = {
                 {"B", 56.78, null, 0},
@@ -88,13 +89,17 @@ public final class DbRawDataUtilTest {
                 {"B", 56.78, null, 0},
                 {"B", 56.78, null, 3}
             };
-            assertArrayEquals(expected, DbRawDataUtil.sort(forArray(data), orderColumns, TO_INDEX, TO_DATA_TYPE).toArray(Object[].class));
+            assertIterEquals(expected, DbRawDataUtil.sort(forArray(data), orderColumns, TO_INDEX, TO_DATA_TYPE));
         }
         {
             Object[][] data = {};
             List<Integer> orderColumns = Collections.emptyList();
             Object[][] expected = {};
-            assertArrayEquals(expected, DbRawDataUtil.sort(forArray(data), orderColumns, TO_INDEX, TO_DATA_TYPE).toArray(Object[].class));
+            assertIterEquals(expected, DbRawDataUtil.sort(forArray(data), orderColumns, TO_INDEX, TO_DATA_TYPE));
         }
+    }
+
+    static void assertIterEquals(Object[][] expected, IteratorWithIO<Object[]> found) throws IOException {
+        assertArrayEquals(expected, DbRawDataUtil.toList(found).toArray());
     }
 }

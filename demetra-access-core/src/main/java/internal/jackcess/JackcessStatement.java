@@ -24,36 +24,28 @@ import com.healthmarketscience.jackcess.Column;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.RowId;
 import com.healthmarketscience.jackcess.Table;
-import ec.tstoolkit.utilities.CheckedIterator;
+import ec.tss.tsproviders.utils.IteratorWithIO;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import static internal.jackcess.JackcessColumnComparator.BY_COLUMN_INDEX;
-import java.util.Collections;
+import internal.xdb.DbRawDataUtil.SuperDataType;
 import java.util.HashSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
 
 /**
  *
  * @author Philippe Charles
  */
+@lombok.extern.slf4j.Slf4j
 public final class JackcessStatement implements Closeable {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JackcessStatement.class);
 
     private final Database database;
     private final Range<RowId> range;
@@ -65,31 +57,36 @@ public final class JackcessStatement implements Closeable {
 
     @Nonnull
     public JackcessResultSet executeQuery(@Nonnull DbBasicSelect query) throws IOException {
-        Table table = database.getTable(query.getTableName());
+        Table input = database.getTable(query.getTableName());
 
-        List<Column> selectColumns = getAllByName(table, query.getSelectColumns());
-        List<Column> orderColumns = getAllByName(table, query.getOrderColumns());
-        SortedSet<Column> dataColumns = mergeAndSortByInternalIndex(selectColumns, orderColumns);
-        SortedMap<Column, String> filter = getFilter(table, query.getFilterItems());
+        Function<String, Column> toColumn = input::getColumn;
+        ToIntFunction<Column> toInternalIndex = Column::getColumnIndex;
+        Function<Column, SuperDataType> toDataType = ToDataType.INSTANCE;
 
-        LOGGER.debug("Query : '{}'", query);
+        List<Column> selectColumns = DbRawDataUtil.getColumns(toColumn, query.getSelectColumns());
+        List<Column> orderColumns = DbRawDataUtil.getColumns(toColumn, query.getOrderColumns());
+        SortedMap<Column, String> filter = DbRawDataUtil.getFilter(toInternalIndex, toColumn, query.getFilterItems());
+
+        SortedSet<Column> dataColumns = DbRawDataUtil.mergeAndSort(toInternalIndex, selectColumns, orderColumns);
+        ToIntFunction<Column> toIndex = DbRawDataUtil.ToIndex.of(toInternalIndex, dataColumns);
+
+        log.debug("Query : '{}'", query);
 
         Stopwatch sw = Stopwatch.createStarted();
-        CheckedIterator<Object[], IOException> rows = new Adapter(CursorFacade.range(table, toColumnNames(query), range).withFilter(filter), dataColumns);
-        LOGGER.debug("Iterator done in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
-
-        ToIndex toIndex = new ToIndex(dataColumns);
+        IteratorWithIO<Object[]> rows = getRows(input, dataColumns, filter, toColumnNames(query));
+        log.debug("Iterator done in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
         if (query.isDistinct()) {
             sw.start();
-            rows = DbRawDataUtil.distinct(rows, selectColumns, toIndex, ToDataType.INSTANCE, new Aggregator(dataColumns.size() + 1));
-            LOGGER.debug("Distinct done in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
+            BiConsumer<Object[], Object[]> aggregator = new Aggregator(dataColumns.size() + 1);
+            rows = DbRawDataUtil.distinct(rows, selectColumns, toIndex, toDataType, aggregator);
+            log.debug("Distinct done in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
         }
 
         if (DbRawDataUtil.isSortRequired(query.isDistinct(), selectColumns, orderColumns)) {
             sw.start();
-            rows = DbRawDataUtil.sort(rows, orderColumns, toIndex, ToDataType.INSTANCE);
-            LOGGER.debug("Sort done in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
+            rows = DbRawDataUtil.sort(rows, orderColumns, toIndex, toDataType);
+            log.debug("Sort done in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
         }
 
         return new JackcessResultSet(selectColumns, DbRawDataUtil.createIndexes(selectColumns, toIndex), rows);
@@ -100,16 +97,11 @@ public final class JackcessStatement implements Closeable {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Implementation details">
-    private static List<Column> getAllByName(Table table, Collection<String> columnNames) {
-        return columnNames.stream().map(table::getColumn).collect(Collectors.toList());
-    }
-
-    private static SortedSet<Column> mergeAndSortByInternalIndex(Iterable<Column>... list) {
-        SortedSet<Column> result = new TreeSet<>(BY_COLUMN_INDEX);
-        for (Iterable<Column> o : list) {
-            o.forEach(result::add);
-        }
-        return result;
+    private IteratorWithIO<Object[]> getRows(Table input, SortedSet<Column> dataColumns, SortedMap<Column, String> filter, Collection<String> columnNames) throws IOException {
+        return new Adapter(
+                CursorFacade.range(input, columnNames, range).withFilter(filter),
+                dataColumns
+        );
     }
 
     private static Collection<String> toColumnNames(DbBasicSelect query) {
@@ -118,31 +110,6 @@ public final class JackcessStatement implements Closeable {
         result.addAll(query.getOrderColumns());
         result.addAll(query.getFilterItems().keySet());
         return result;
-    }
-
-    private static SortedMap<Column, String> getFilter(Table table, Map<String, String> filterItems) {
-        SortedMap<Column, String> result = new TreeMap<>(BY_COLUMN_INDEX);
-        filterItems.forEach((k, v) -> result.put(table.getColumn(k), v));
-        return result;
-    }
-
-    private static final class ToIndex implements ToIntFunction<Column> {
-
-        private final int[] index;
-
-        public ToIndex(SortedSet<Column> dataColumns) {
-            Column max = dataColumns.comparator().equals(BY_COLUMN_INDEX) ? dataColumns.last() : Collections.max(dataColumns, BY_COLUMN_INDEX);
-            this.index = new int[max.getColumnIndex() + 1];
-            int i = 0;
-            for (Column o : dataColumns) {
-                index[o.getColumnIndex()] = i++;
-            }
-        }
-
-        @Override
-        public int applyAsInt(Column value) {
-            return index[value.getColumnIndex()];
-        }
     }
 
     private static final class ToDataType implements Function<Column, DbRawDataUtil.SuperDataType> {
@@ -190,7 +157,7 @@ public final class JackcessStatement implements Closeable {
         }
     }
 
-    private static final class Adapter extends CheckedIterator<Object[], IOException> {
+    private static final class Adapter implements IteratorWithIO<Object[]> {
 
         private final CursorFacade cursor;
         private final Column[] dataColumns;
@@ -213,6 +180,10 @@ public final class JackcessStatement implements Closeable {
             }
             result[dataColumns.length] = result[dataColumns.length + 1] = cursor.getRowId();
             return result;
+        }
+
+        @Override
+        public void close() throws IOException {
         }
     }
     //</editor-fold>
