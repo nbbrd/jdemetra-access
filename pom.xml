@@ -32,7 +32,7 @@
         <jacoco-maven-plugin.version>0.8.3</jacoco-maven-plugin.version> 
 
         <!-- dev support -->
-        <lombok.version>1.18.4</lombok.version>
+        <lombok.version>1.18.6</lombok.version>
 
         <!-- dependencies -->
         <demetra.version>2.2.0</demetra.version>
