@@ -37,7 +37,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  *
@@ -45,11 +45,11 @@ import javax.annotation.Nonnull;
  */
 interface AccessFileParam extends IParam<DataSource, AccessFileBean> {
 
-    @Nonnull
+    @NonNull
     String getVersion();
 
-    @Nonnull
-    IParam<DataSet, CubeId> getCubeIdParam(@Nonnull DataSource dataSource);
+    @NonNull
+    IParam<DataSet, CubeId> getCubeIdParam(@NonNull DataSource dataSource);
 
     static class V1 implements AccessFileParam {
 

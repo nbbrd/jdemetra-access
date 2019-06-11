@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.SortedMap;
-import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  *
@@ -35,7 +35,7 @@ class CursorFacadeUtil {
 
     private static abstract class ForwardingCursor implements CursorFacade {
 
-        @Nonnull
+        @NonNull
         protected abstract CursorFacade getDelegate();
 
         @Override
@@ -126,7 +126,7 @@ class CursorFacadeUtil {
         }
 
         @Override
-        public void moveBefore(@Nonnull RowId rowId) throws IOException {
+        public void moveBefore(@NonNull RowId rowId) throws IOException {
             internalCursor.findRow(rowId);
             internalCursor.moveToPreviousRow();
         }

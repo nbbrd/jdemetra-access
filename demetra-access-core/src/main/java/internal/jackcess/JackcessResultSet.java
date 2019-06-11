@@ -23,8 +23,8 @@ import ec.tss.tsproviders.utils.IteratorWithIO;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -37,7 +37,7 @@ public final class JackcessResultSet implements Closeable {
     private final IteratorWithIO<Object[]> rows;
     private Object[] currentRow = null;
 
-    JackcessResultSet(@Nonnull List<Column> columns, @Nonnull int[] indexes, @Nonnull IteratorWithIO<Object[]> data) {
+    JackcessResultSet(@NonNull List<Column> columns, @NonNull int[] indexes, @NonNull IteratorWithIO<Object[]> data) {
         this.columns = columns;
         this.indexes = indexes;
         this.rows = data;
@@ -56,12 +56,12 @@ public final class JackcessResultSet implements Closeable {
         return currentRow[indexes[index]];
     }
 
-    @Nonnull
+    @NonNull
     public Column getColumn(int index) throws IOException, IndexOutOfBoundsException {
         return columns.get(index);
     }
 
-    @Nonnull
+    @NonNull
     public Range<RowId> getRange() throws IOException {
         RowId lower = (RowId) currentRow[currentRow.length - 2];
         RowId upper = (RowId) currentRow[currentRow.length - 1];
