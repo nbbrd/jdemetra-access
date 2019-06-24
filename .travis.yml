@@ -8,7 +8,7 @@ env:
   global:
     - DEPLOY_JDK=openjdk8
     - DEPLOY_REPO=nbbrd/jdemetra-access
-    - DEPLOY_BIN=demetra-access-desktop/target/*.nbm
+    - DEPLOY_BIN=demetra-access-desktop/target/binaries/*
 
 deploy:
   # Github releases from tags
