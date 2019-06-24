@@ -13,10 +13,6 @@
     
     <name>Demetra - Access - Core</name>    
     
-    <properties>
-        <jackcess.version>3.0.1</jackcess.version>
-    </properties>
-                
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -33,10 +29,10 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <dependency>     
+            <dependency>
                 <groupId>com.healthmarketscience.jackcess</groupId>     
                 <artifactId>jackcess</artifactId>     
-                <version>${jackcess.version}</version> 
+                <version>3.0.1</version> 
                 <exclusions>
                     <exclusion>
                         <groupId>commons-logging</groupId>
@@ -65,6 +61,7 @@
             <artifactId>org-openide-util-lookup</artifactId>
             <scope>provided</scope>
         </dependency>
+        
         <!-- compile and runtime -->
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
@@ -74,12 +71,14 @@
             <groupId>com.healthmarketscience.jackcess</groupId>     
             <artifactId>jackcess</artifactId>     
         </dependency> 
+        
         <!-- runtime only -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
             <scope>runtime</scope>
         </dependency>
+        
         <!-- test only -->
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
@@ -102,13 +101,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 </project>
