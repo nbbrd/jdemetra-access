@@ -23,6 +23,7 @@ import com.healthmarketscience.jackcess.ColumnBuilder;
 import com.healthmarketscience.jackcess.DataType;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
+import com.healthmarketscience.jackcess.DateTimeType;
 import com.healthmarketscience.jackcess.RowId;
 import com.healthmarketscience.jackcess.Table;
 import com.healthmarketscience.jackcess.TableBuilder;
@@ -104,6 +105,7 @@ public class JackcessStatementTest {
     private static File createResource() throws IOException {
         File result = File.createTempFile("JackcessStatementTest", ".mdb");
         try (Database db = new DatabaseBuilder(result).setFileFormat(Database.FileFormat.V2007).create()) {
+            db.setDateTimeType(DateTimeType.DATE);
 
             Table table = new TableBuilder("T")
                     .addColumn(new ColumnBuilder("C0", DataType.TEXT))
@@ -127,7 +129,9 @@ public class JackcessStatementTest {
     }
 
     private static Database open(File file) throws IOException {
-        return new DatabaseBuilder(file).setReadOnly(true).open();
+        Database result = new DatabaseBuilder(file).setReadOnly(true).open();
+        result.setDateTimeType(DateTimeType.DATE);
+        return result;
     }
 
     private static List<Object> toValues(JackcessResultSet rs, int index) throws IOException {

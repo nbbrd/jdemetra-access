@@ -19,6 +19,7 @@ package internal.demetra.jackcess;
 import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
+import com.healthmarketscience.jackcess.DateTimeType;
 import com.healthmarketscience.jackcess.RowId;
 import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.cube.CubeId;
@@ -191,6 +192,7 @@ public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Re
             JackcessResultSet rs = null;
             try {
                 conn = new DatabaseBuilder(paths.resolveFilePath(file)).setReadOnly(true).open();
+                conn.setDateTimeType(DateTimeType.DATE);
                 stmt = new JackcessStatement(conn, range);
                 DbBasicSelect query = getQuery();
                 rs = stmt.executeQuery(query);

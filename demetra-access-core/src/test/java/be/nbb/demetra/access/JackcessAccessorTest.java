@@ -22,6 +22,7 @@ import com.healthmarketscience.jackcess.ColumnBuilder;
 import com.healthmarketscience.jackcess.DataType;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
+import com.healthmarketscience.jackcess.DateTimeType;
 import com.healthmarketscience.jackcess.RowId;
 import com.healthmarketscience.jackcess.Table;
 import com.healthmarketscience.jackcess.TableBuilder;
@@ -60,6 +61,7 @@ public class JackcessAccessorTest extends DbAccessorTest<JackcessBean> {
     public static File createResource() throws IOException {
         File result = File.createTempFile("Top5Browsers", ".mdb");
         try (Database db = new DatabaseBuilder(result).setFileFormat(Database.FileFormat.V2007).create()) {
+            db.setDateTimeType(DateTimeType.DATE);
 
             Parsers.Parser<String> toString = Parsers.stringParser();
             DataFormat dataFormat = DataFormat.create("fr_BE", "dd/MM/yyyy", null);

@@ -34,6 +34,7 @@ import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.ColumnBuilder;
 import com.healthmarketscience.jackcess.DataType;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
+import com.healthmarketscience.jackcess.DateTimeType;
 import com.healthmarketscience.jackcess.TableBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -143,6 +144,7 @@ public class CursorFacadeTest {
     private static File createResource() throws IOException {
         File result = File.createTempFile("CursorFacadeTest", ".mdb");
         try (Database db = new DatabaseBuilder(result).setFileFormat(Database.FileFormat.V2007).create()) {
+            db.setDateTimeType(DateTimeType.DATE);
 
             Table table = new TableBuilder("MyTable")
                     .addColumn(new ColumnBuilder("Col0", DataType.TEXT))
@@ -161,7 +163,9 @@ public class CursorFacadeTest {
     }
 
     private static Database open(File file) throws IOException {
-        return new DatabaseBuilder(file).setReadOnly(true).open();
+        Database result = new DatabaseBuilder(file).setReadOnly(true).open();
+        result.setDateTimeType(DateTimeType.DATE);
+        return result;
     }
 
     private static int count(CursorFacade cursor) throws IOException {
