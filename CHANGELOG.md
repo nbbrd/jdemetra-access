@@ -1,0 +1,57 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## [Unreleased]
+
+### Added
+- Add generation of checksum and signature on binaries
+- Add basic support of Access 2019
+
+### Fixed
+
+### Changed
+
+## [2.2.1] - 2019-01-09
+
+This is a feature release of **jdemetra-access**.
+
+### Added
+- Add partial support of Access 2016
+
+### Fixed
+- Fix compatibility issue with JD+ 2.2.1
+
+## [2.2.0] - 2017-07-12
+
+This is a bugfix release of **jdemetra-access**.
+
+### Fixed
+- Fix default ordering of columns in auto-completion
+- Fix ordering when querying observations
+- Fix display name of relative file.
+
+### Changed
+- Minimum JDemetra+ version is now v2.2.0
+
+## [2.1.0] - 2016-10-27
+
+This is a feature release of **jdemetra-access**.   
+
+### Added
+- Improve cursor performance
+- Add saving of TS to Access
+
+### Changed
+- Minimum JDemetra+ version is now v2.1.0
+
+## [2.0.0] - 2016-02-22
+
+This is the initial release of **jdemetra-access**.   
+
+[Unreleased]: https://github.com/nbbrd/jdemetra-access/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/nbbrd/jdemetra-access/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/nbbrd/jdemetra-access/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/nbbrd/jdemetra-access/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/nbbrd/jdemetra-access/releases/tag/v2.0.0
