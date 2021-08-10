@@ -67,6 +67,16 @@
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-jdbc</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.checkerframework</groupId>
+                    <artifactId>checker-qual</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.netbeans.api</groupId>
+                    <artifactId>org-openide-util-lookup</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>     
             <groupId>com.healthmarketscience.jackcess</groupId>     
@@ -85,6 +95,12 @@
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>demetra-tck</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.checkerframework</groupId>
+                    <artifactId>checker-qual</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
