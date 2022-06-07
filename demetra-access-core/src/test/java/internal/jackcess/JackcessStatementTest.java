@@ -32,9 +32,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -44,12 +45,12 @@ public class JackcessStatementTest {
 
     private static File file;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         file = createResource();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         file.delete();
     }

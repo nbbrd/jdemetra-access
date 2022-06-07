@@ -26,9 +26,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeSet;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import static internal.jackcess.JackcessColumnComparator.BY_COLUMN_INDEX;
 import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.ColumnBuilder;
@@ -40,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  *
@@ -50,12 +51,12 @@ public class CursorFacadeTest {
 
     private static File file;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         file = createResource();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         file.delete();
     }

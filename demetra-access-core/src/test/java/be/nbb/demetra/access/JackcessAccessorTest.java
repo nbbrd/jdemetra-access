@@ -34,11 +34,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import org.junit.AfterClass;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  *
@@ -48,12 +50,12 @@ public class JackcessAccessorTest extends DbAccessorTest<JackcessBean> {
 
     static File TOP5;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         TOP5 = createResource();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         TOP5.delete();
     }

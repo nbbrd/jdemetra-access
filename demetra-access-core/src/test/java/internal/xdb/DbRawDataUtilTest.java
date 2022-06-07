@@ -19,14 +19,15 @@ package internal.xdb;
 import com.google.common.collect.Iterators;
 import ec.tss.tsproviders.utils.IteratorWithIO;
 import java.io.IOException;
-import static org.junit.Assert.assertArrayEquals;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 /**
  *
