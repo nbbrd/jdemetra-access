@@ -293,10 +293,24 @@
         </profile>
     </profiles>
 
+    <!-- Custom repositories: order matters! -->
     <repositories>
+        <!-- 1. Main -->
+        <repository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <!-- 2. JD+ artifacts <= v2.2.3 -->
         <repository>
             <id>jfrog-maven-mirror</id>
             <url>https://raw.githubusercontent.com/nbbrd/jfrog-maven-mirror/main</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
     </repositories>
 </project>
