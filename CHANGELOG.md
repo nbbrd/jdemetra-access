@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.2.2] - 2022-08-19
+
 [JDemetra+ 2.2.3 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
 ### Added
@@ -66,7 +68,8 @@ This is a feature release of **jdemetra-access**.
 This is the initial release of **jdemetra-access**.  
 [JDemetra+ 2.0.0 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
-[Unreleased]: https://github.com/nbbrd/jdemetra-access/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/nbbrd/jdemetra-access/compare/v2.2.2...HEAD
+[2.2.2]: https://github.com/nbbrd/jdemetra-access/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/nbbrd/jdemetra-access/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/nbbrd/jdemetra-access/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/nbbrd/jdemetra-access/compare/v2.0.0...v2.1.0
