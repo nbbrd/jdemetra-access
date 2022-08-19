@@ -26,9 +26,10 @@ import ec.tss.tsproviders.utils.DataFormat;
 import java.io.File;
 import java.io.IOException;
 import static java.util.Arrays.asList;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -38,12 +39,12 @@ public class AccessFileProviderTest {
 
     private static File FILE;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         FILE = JackcessAccessorTest.createResource();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         FILE.delete();
     }

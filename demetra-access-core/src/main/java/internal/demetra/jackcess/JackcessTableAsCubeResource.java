@@ -19,6 +19,7 @@ package internal.demetra.jackcess;
 import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
+import com.healthmarketscience.jackcess.DateTimeType;
 import com.healthmarketscience.jackcess.RowId;
 import ec.tss.tsproviders.HasFilePaths;
 import ec.tss.tsproviders.cube.CubeId;
@@ -47,8 +48,8 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -56,15 +57,15 @@ import javax.annotation.Nullable;
  */
 public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Resource<java.util.Date> {
 
-    @Nonnull
+    @NonNull
     public static JackcessTableAsCubeResource create(
-            @Nonnull HasFilePaths paths,
-            @Nonnull File file,
-            @Nonnull String table,
-            @Nonnull List<String> dimColumns,
-            @Nonnull TableDataParams tdp,
-            @Nonnull ObsGathering gathering,
-            @Nonnull String labelColumn) {
+            @NonNull HasFilePaths paths,
+            @NonNull File file,
+            @NonNull String table,
+            @NonNull List<String> dimColumns,
+            @NonNull TableDataParams tdp,
+            @NonNull ObsGathering gathering,
+            @NonNull String labelColumn) {
         return new JackcessTableAsCubeResource(paths, file, table, CubeId.root(dimColumns), tdp, gathering, labelColumn);
     }
 
@@ -178,19 +179,20 @@ public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Re
     @VisibleForTesting
     interface JackcessQuery<T> {
 
-        @Nonnull
+        @NonNull
         DbBasicSelect getQuery();
 
         @Nullable
-        T process(@Nonnull JackcessResultSet rs, @Nonnull AutoCloseable closeable) throws IOException;
+        T process(@NonNull JackcessResultSet rs, @NonNull AutoCloseable closeable) throws IOException;
 
         @Nullable
-        default public T call(@Nonnull HasFilePaths paths, @Nonnull File file, @Nullable Range<RowId> range) throws IOException {
+        default public T call(@NonNull HasFilePaths paths, @NonNull File file, @Nullable Range<RowId> range) throws IOException {
             Database conn = null;
             JackcessStatement stmt = null;
             JackcessResultSet rs = null;
             try {
                 conn = new DatabaseBuilder(paths.resolveFilePath(file)).setReadOnly(true).open();
+                conn.setDateTimeType(DateTimeType.DATE);
                 stmt = new JackcessStatement(conn, range);
                 DbBasicSelect query = getQuery();
                 rs = stmt.executeQuery(query);

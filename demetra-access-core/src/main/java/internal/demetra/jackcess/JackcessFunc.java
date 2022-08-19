@@ -21,8 +21,8 @@ import com.healthmarketscience.jackcess.Column;
 import ec.tss.tsproviders.db.DbUtil;
 import ec.tss.tsproviders.utils.IParser;
 import java.io.IOException;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -31,33 +31,33 @@ import javax.annotation.Nullable;
  */
 public interface JackcessFunc<T> extends DbUtil.Func<JackcessResultSet, T, IOException> {
 
-    @Nonnull
+    @NonNull
     public static JackcessFunc<String> onNull() {
         return NullFunc.INSTANCE;
     }
 
-    @Nonnull
+    @NonNull
     public static JackcessFunc<String[]> onGetStringArray(int index, int length) {
         return rs -> getStringArray(rs, index, length);
     }
 
-    @Nonnull
+    @NonNull
     public static JackcessFunc<String> onGetObjectToString(int index) {
         return rs -> getObjectToString(rs, index);
     }
 
-    @Nonnull
+    @NonNull
     public static <X> JackcessFunc<X> compose(int index, IParser<X> parser) {
         return rs -> getAndParse(rs, index, parser);
     }
 
-    @Nonnull
+    @NonNull
     public static JackcessFunc<java.util.Date> onDate(JackcessResultSet rs, int index, IParser<java.util.Date> dateParser) throws IOException {
         JackcessFunc<java.util.Date> result = dateByDataType(rs.getColumn(index), index);
         return result != null ? result : compose(index, dateParser);
     }
 
-    @Nonnull
+    @NonNull
     public static JackcessFunc<Number> onNumber(JackcessResultSet rs, int index, IParser<Number> numberParser) throws IOException {
         JackcessFunc<Number> result = numberByDataType(rs.getColumn(index), index);
         return result != null ? result : compose(index, numberParser);

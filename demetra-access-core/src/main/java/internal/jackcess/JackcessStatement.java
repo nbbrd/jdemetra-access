@@ -32,13 +32,13 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import internal.xdb.DbRawDataUtil.SuperDataType;
 import java.util.HashSet;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -50,13 +50,13 @@ public final class JackcessStatement implements Closeable {
     private final Database database;
     private final Range<RowId> range;
 
-    public JackcessStatement(@Nonnull Database database, @Nullable Range<RowId> range) {
+    public JackcessStatement(@NonNull Database database, @Nullable Range<RowId> range) {
         this.database = database;
         this.range = range != null ? range : Range.<RowId>all();
     }
 
-    @Nonnull
-    public JackcessResultSet executeQuery(@Nonnull DbBasicSelect query) throws IOException {
+    @NonNull
+    public JackcessResultSet executeQuery(@NonNull DbBasicSelect query) throws IOException {
         Table input = database.getTable(query.getTableName());
 
         Function<String, Column> toColumn = input::getColumn;

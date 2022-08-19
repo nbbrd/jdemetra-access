@@ -26,6 +26,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Range;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
+import com.healthmarketscience.jackcess.DateTimeType;
 import com.healthmarketscience.jackcess.RowId;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.db.DbSeries;
@@ -237,6 +238,7 @@ final class JackcessAccessor extends DbAccessor.Commander<JackcessBean> {
                 LOGGER.debug(query.toSql());
             }
             try (Database conn = new DatabaseBuilder(dbBean.getFile()).setReadOnly(true).open()) {
+                conn.setDateTimeType(DateTimeType.DATE);
                 try (JackcessStatement stmt = new JackcessStatement(conn, rangeIndex.getIfPresent(ref))) {
                     try (JackcessResultSet rs = stmt.executeQuery(query)) {
                         return process(rs);

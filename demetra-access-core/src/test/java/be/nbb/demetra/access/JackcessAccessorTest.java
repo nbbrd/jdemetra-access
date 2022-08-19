@@ -22,6 +22,7 @@ import com.healthmarketscience.jackcess.ColumnBuilder;
 import com.healthmarketscience.jackcess.DataType;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
+import com.healthmarketscience.jackcess.DateTimeType;
 import com.healthmarketscience.jackcess.RowId;
 import com.healthmarketscience.jackcess.Table;
 import com.healthmarketscience.jackcess.TableBuilder;
@@ -33,11 +34,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import org.junit.AfterClass;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  *
@@ -47,12 +50,12 @@ public class JackcessAccessorTest extends DbAccessorTest<JackcessBean> {
 
     static File TOP5;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         TOP5 = createResource();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         TOP5.delete();
     }
@@ -60,6 +63,7 @@ public class JackcessAccessorTest extends DbAccessorTest<JackcessBean> {
     public static File createResource() throws IOException {
         File result = File.createTempFile("Top5Browsers", ".mdb");
         try (Database db = new DatabaseBuilder(result).setFileFormat(Database.FileFormat.V2007).create()) {
+            db.setDateTimeType(DateTimeType.DATE);
 
             Parsers.Parser<String> toString = Parsers.stringParser();
             DataFormat dataFormat = DataFormat.create("fr_BE", "dd/MM/yyyy", null);

@@ -24,8 +24,8 @@ import com.healthmarketscience.jackcess.Table;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.SortedMap;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -36,25 +36,25 @@ public interface CursorFacade {
     boolean moveToNextRow() throws IOException;
 
     @Nullable
-    Object getCurrentRowValue(@Nonnull Column column) throws IOException;
+    Object getCurrentRowValue(@NonNull Column column) throws IOException;
 
-    @Nonnull
+    @NonNull
     RowId getRowId() throws IOException;
 
-    void moveBefore(@Nonnull RowId rowId) throws IOException;
+    void moveBefore(@NonNull RowId rowId) throws IOException;
 
-    @Nonnull
-    default CursorFacade withFilter(@Nonnull SortedMap<Column, String> filter) {
+    @NonNull
+    default CursorFacade withFilter(@NonNull SortedMap<Column, String> filter) {
         return filter.isEmpty() ? this : new CursorFacadeUtil.Filtering(this, filter);
     }
 
-    @Nonnull
-    static CursorFacade basic(@Nonnull Table table, @Nonnull Collection<String> columnNames) throws IOException {
+    @NonNull
+    static CursorFacade basic(@NonNull Table table, @NonNull Collection<String> columnNames) throws IOException {
         return new CursorFacadeUtil.BasicCursor(CursorBuilder.createCursor(table), columnNames);
     }
 
-    @Nonnull
-    static CursorFacade range(@Nonnull Table table, @Nonnull Collection<String> columnNames, @Nonnull Range<RowId> range) throws IOException {
+    @NonNull
+    static CursorFacade range(@NonNull Table table, @NonNull Collection<String> columnNames, @NonNull Range<RowId> range) throws IOException {
         CursorFacade basic = basic(table, columnNames);
         if (range.hasLowerBound()) {
             basic.moveBefore(range.lowerEndpoint());

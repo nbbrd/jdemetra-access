@@ -23,6 +23,7 @@ import com.healthmarketscience.jackcess.ColumnBuilder;
 import com.healthmarketscience.jackcess.DataType;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
+import com.healthmarketscience.jackcess.DateTimeType;
 import com.healthmarketscience.jackcess.RowId;
 import com.healthmarketscience.jackcess.Table;
 import com.healthmarketscience.jackcess.TableBuilder;
@@ -31,9 +32,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -43,12 +45,12 @@ public class JackcessStatementTest {
 
     private static File file;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws IOException {
         file = createResource();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         file.delete();
     }
@@ -104,6 +106,7 @@ public class JackcessStatementTest {
     private static File createResource() throws IOException {
         File result = File.createTempFile("JackcessStatementTest", ".mdb");
         try (Database db = new DatabaseBuilder(result).setFileFormat(Database.FileFormat.V2007).create()) {
+            db.setDateTimeType(DateTimeType.DATE);
 
             Table table = new TableBuilder("T")
                     .addColumn(new ColumnBuilder("C0", DataType.TEXT))
@@ -127,7 +130,9 @@ public class JackcessStatementTest {
     }
 
     private static Database open(File file) throws IOException {
-        return new DatabaseBuilder(file).setReadOnly(true).open();
+        Database result = new DatabaseBuilder(file).setReadOnly(true).open();
+        result.setDateTimeType(DateTimeType.DATE);
+        return result;
     }
 
     private static List<Object> toValues(JackcessResultSet rs, int index) throws IOException {

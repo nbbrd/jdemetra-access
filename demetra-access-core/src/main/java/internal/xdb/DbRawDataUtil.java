@@ -38,8 +38,8 @@ import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import lombok.AccessLevel;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  *
@@ -70,8 +70,8 @@ public class DbRawDataUtil {
         };
     }
 
-    @Nonnull
-    public <C> int[] createIndexes(@Nonnull List<C> selectColumns, @Nonnull ToIntFunction<C> toIndex) {
+    @NonNull
+    public <C> int[] createIndexes(@NonNull List<C> selectColumns, @NonNull ToIntFunction<C> toIndex) {
         int[] result = new int[selectColumns.size()];
         for (int i = 0; i < result.length; i++) {
             result[i] = toIndex.applyAsInt(selectColumns.get(i));
@@ -79,20 +79,20 @@ public class DbRawDataUtil {
         return result;
     }
 
-    @Nonnull
-    public <C> List<C> getColumns(@Nonnull Function<String, C> toColumn, @Nonnull Collection<String> columns) {
+    @NonNull
+    public <C> List<C> getColumns(@NonNull Function<String, C> toColumn, @NonNull Collection<String> columns) {
         return columns.stream().map(toColumn).collect(Collectors.toList());
     }
 
-    @Nonnull
-    public <C> SortedSet<C> mergeAndSort(@Nonnull ToIntFunction<C> toInternalIndex, @Nonnull Collection<C>... columns) {
+    @NonNull
+    public <C> SortedSet<C> mergeAndSort(@NonNull ToIntFunction<C> toInternalIndex, @NonNull Collection<C>... columns) {
         return Stream.of(columns)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparingInt(toInternalIndex))));
     }
 
-    @Nonnull
-    public <C> SortedMap<C, String> getFilter(@Nonnull ToIntFunction<C> toInternalIndex, @Nonnull Function<String, C> toColumn, @Nonnull Map<String, String> filterItems) {
+    @NonNull
+    public <C> SortedMap<C, String> getFilter(@NonNull ToIntFunction<C> toInternalIndex, @NonNull Function<String, C> toColumn, @NonNull Map<String, String> filterItems) {
         SortedMap<C, String> result = new TreeMap<>(Comparator.comparingInt(toInternalIndex));
         filterItems.forEach((k, v) -> result.put(toColumn.apply(k), v));
         return result;
@@ -101,8 +101,8 @@ public class DbRawDataUtil {
     @lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class ToIndex<C> implements ToIntFunction<C> {
 
-        @Nonnull
-        public static <C> ToIndex<C> of(@Nonnull ToIntFunction<C> toInternalIndex, @Nonnull SortedSet<C> dataColumns) {
+        @NonNull
+        public static <C> ToIndex<C> of(@NonNull ToIntFunction<C> toInternalIndex, @NonNull SortedSet<C> dataColumns) {
             C max = Collections.max(dataColumns, Comparator.comparingInt(toInternalIndex));
             int[] index = new int[toInternalIndex.applyAsInt(max) + 1];
             int i = 0;
@@ -124,14 +124,14 @@ public class DbRawDataUtil {
     public static final BiConsumer<Object[], Object[]> NO_AGGREGATION = (l, r) -> {
     };
 
-    @Nonnull
+    @NonNull
     @SuppressWarnings("null")
     public <C> IteratorWithIO<Object[]> distinct(
-            @Nonnull IteratorWithIO<Object[]> rows,
-            @Nonnull List<C> selectColumns,
-            @Nonnull ToIntFunction<C> toIndex,
-            @Nonnull Function<C, SuperDataType> toDataType,
-            @Nonnull BiConsumer<Object[], Object[]> aggregator) throws IOException {
+            @NonNull IteratorWithIO<Object[]> rows,
+            @NonNull List<C> selectColumns,
+            @NonNull ToIntFunction<C> toIndex,
+            @NonNull Function<C, SuperDataType> toDataType,
+            @NonNull BiConsumer<Object[], Object[]> aggregator) throws IOException {
 
         TreeMap<Object[], Object[]> result = new TreeMap<>(newRowOrdering(selectColumns, toIndex, toDataType));
         Equivalence<Object[]> equivalence = newRowEquivalence(selectColumns, toIndex);
@@ -154,20 +154,20 @@ public class DbRawDataUtil {
         return IteratorWithIO.from(result.keySet().iterator());
     }
 
-    @Nonnull
+    @NonNull
     public <C> IteratorWithIO<Object[]> sort(
-            @Nonnull IteratorWithIO<Object[]> rows,
-            @Nonnull List<C> orderColumns,
-            @Nonnull ToIntFunction<C> toIndex,
-            @Nonnull Function<C, SuperDataType> toDataType) throws IOException {
+            @NonNull IteratorWithIO<Object[]> rows,
+            @NonNull List<C> orderColumns,
+            @NonNull ToIntFunction<C> toIndex,
+            @NonNull Function<C, SuperDataType> toDataType) throws IOException {
 
         List<Object[]> tmp = toList(rows);
         tmp.sort(newRowOrdering(orderColumns, toIndex, toDataType));
         return IteratorWithIO.from(tmp.iterator());
     }
 
-    @Nonnull
-    public <C> boolean isSortRequired(boolean distinct, @Nonnull List<C> selectColumns, @Nonnull List<C> orderColumns) {
+    @NonNull
+    public <C> boolean isSortRequired(boolean distinct, @NonNull List<C> selectColumns, @NonNull List<C> orderColumns) {
         return !orderColumns.isEmpty() && !(distinct && Iterables.elementsEqual(selectColumns, orderColumns));
     }
 
