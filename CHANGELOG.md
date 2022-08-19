@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [2.2.2] - 2022-08-19
 
+This is a feature release of **jdemetra-access**.  
 [JDemetra+ 2.2.3 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
 ### Added
