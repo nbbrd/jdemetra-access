@@ -5,7 +5,7 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-access-parent</artifactId>
-    <version>2.2.2-SNAPSHOT</version>
+    <version>2.2.2</version>
     <packaging>pom</packaging>
 
     <name>Demetra - Access</name>
