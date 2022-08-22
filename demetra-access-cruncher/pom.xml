@@ -20,7 +20,7 @@
             <groupId>be.nbb.demetra</groupId>
             <artifactId>demetra-access-core</artifactId>
             <version>${project.version}</version>
-            <!-- Exclude libraries provided by cruncher -->
+            <!-- Excludes libraries provided by cruncher -->
             <exclusions>
                 <exclusion>
                     <groupId>eu.europa.ec.joinup.sat</groupId>
@@ -36,6 +36,7 @@
 
     <build>
         <plugins>
+            <!-- Generates uber-jar file -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -62,7 +63,7 @@
                         <transformer
                                 implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                     </transformers>
-                    <!-- Relocate libraries added by extension -->
+                    <!-- Relocates libraries added by extension -->
                     <relocations>
                         <relocation>
                             <pattern>com.healthmarketscience</pattern>

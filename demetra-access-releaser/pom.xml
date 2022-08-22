@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>demetra-access-parent</artifactId>
+        <groupId>be.nbb.demetra</groupId>
+        <version>2.2.3-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>demetra-access-releaser</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Demetra - Access - Releaser</name>
+
+    <dependencies>
+        <dependency>
+            <artifactId>demetra-access-cruncher</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <artifactId>demetra-access-desktop</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>full-release</id>
+            <properties>
+                <project.x.rootdir>${project.basedir}/..</project.x.rootdir>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jreleaser</groupId>
+                        <artifactId>jreleaser-maven-plugin</artifactId>
+                        <version>1.1.0</version>
+                        <executions>
+                            <execution>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>full-release</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <jreleaser>
+                                <release>
+                                    <github>
+                                        <skipTag>true</skipTag>
+                                        <draft>true</draft>
+                                        <!-- Fix default value -->
+                                        <branch>master</branch>
+                                        <changelog>
+                                            <external>${project.x.rootdir}/CHANGELOG.md</external>
+                                        </changelog>
+                                    </github>
+                                </release>
+                                <checksum>
+                                    <individual>true</individual>
+                                </checksum>
+                                <signing>
+                                    <active>ALWAYS</active>
+                                    <!-- Fix default value -->
+                                    <armored>true</armored>
+                                </signing>
+                                <files>
+                                    <artifacts>
+                                        <artifact>
+                                            <path>
+                                                ${project.x.rootdir}/demetra-access-cruncher/target/demetra-access-cruncher-${project.version}-uber.jar
+                                            </path>
+                                        </artifact>
+                                        <artifact>
+                                            <path>
+                                                ${project.x.rootdir}/demetra-access-desktop/target/demetra-access-desktop-${project.version}.nbm
+                                            </path>
+                                        </artifact>
+                                    </artifacts>
+                                </files>
+                            </jreleaser>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
