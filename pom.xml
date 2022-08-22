@@ -45,6 +45,7 @@
 
     <modules>
         <module>demetra-access-core</module>
+        <module>demetra-access-cruncher</module>
         <module>demetra-access-desktop</module>
     </modules>
 
