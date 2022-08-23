@@ -9,7 +9,7 @@
     <packaging>pom</packaging>
 
     <name>Demetra - Access</name>
-    <description>A pure java library for reading time series from MS Access databases.</description>
+    <description>A pure java library for reading/writing time series from/to MS Access databases.</description>
     <url>https://github.com/nbbrd/jdemetra-access</url>
     <inceptionYear>2016</inceptionYear>
 
