@@ -5,11 +5,11 @@
 
     <groupId>be.nbb.demetra</groupId>
     <artifactId>demetra-access-parent</artifactId>
-    <version>2.2.2</version>
+    <version>2.2.3</version>
     <packaging>pom</packaging>
 
     <name>Demetra - Access</name>
-    <description>A pure java library for reading time series from MS Access databases.</description>
+    <description>A pure java library for reading/writing time series from/to MS Access databases.</description>
     <url>https://github.com/nbbrd/jdemetra-access</url>
     <inceptionYear>2016</inceptionYear>
 
@@ -45,7 +45,9 @@
 
     <modules>
         <module>demetra-access-core</module>
+        <module>demetra-access-cruncher</module>
         <module>demetra-access-desktop</module>
+        <module>demetra-access-releaser</module>
     </modules>
 
     <dependencyManagement>
