@@ -31,11 +31,25 @@
     <profiles>
         <profile>
             <id>full-release</id>
-            <properties>
-                <project.x.rootdir>${project.basedir}/..</project.x.rootdir>
-            </properties>
             <build>
                 <plugins>
+                    <!-- Extract changelog for release -->
+                    <plugin>
+                        <groupId>com.github.nbbrd.heylogs</groupId>
+                        <artifactId>heylogs-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>extract-changelog</id>
+                                <goals>
+                                    <goal>extract</goal>
+                                </goals>
+                                <configuration>
+                                    <inputFile>${project.parent.basedir}/CHANGELOG.md</inputFile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Release assets -->
                     <plugin>
                         <groupId>org.jreleaser</groupId>
                         <artifactId>jreleaser-maven-plugin</artifactId>
@@ -53,11 +67,10 @@
                                 <release>
                                     <github>
                                         <skipTag>true</skipTag>
-                                        <draft>true</draft>
                                         <!-- Fix default value -->
                                         <branch>master</branch>
                                         <changelog>
-                                            <external>${project.x.rootdir}/CHANGELOG.md</external>
+                                            <external>${project.build.directory}/CHANGELOG.md</external>
                                         </changelog>
                                     </github>
                                 </release>
@@ -73,12 +86,12 @@
                                     <artifacts>
                                         <artifact>
                                             <path>
-                                                ${project.x.rootdir}/demetra-access-cruncher/target/demetra-access-cruncher-${project.version}-uber.jar
+                                                ${project.parent.basedir}/demetra-access-cruncher/target/demetra-access-cruncher-${project.version}-uber.jar
                                             </path>
                                         </artifact>
                                         <artifact>
                                             <path>
-                                                ${project.x.rootdir}/demetra-access-desktop/target/demetra-access-desktop-${project.version}.nbm
+                                                ${project.parent.basedir}/demetra-access-desktop/target/demetra-access-desktop-${project.version}.nbm
                                             </path>
                                         </artifact>
                                     </artifacts>
