@@ -43,11 +43,8 @@ import internal.xdb.DbBasicSelect;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -137,7 +134,7 @@ public final class JackcessTableAsCubeResource implements TableAsCubeAccessor.Re
 
     @Override
     public OptionalTsData.Builder2<Date> newBuilder() {
-        return OptionalTsData.builderByDate(new GregorianCalendar(), gathering, ObsCharacteristics.ORDERED);
+        return OptionalTsData.builderByDate(new GregorianCalendar(TimeZone.getDefault(), Locale.getDefault(Locale.Category.FORMAT)), gathering, ObsCharacteristics.ORDERED);
     }
 
     private static void closeAll(Exception root, AutoCloseable... items) {

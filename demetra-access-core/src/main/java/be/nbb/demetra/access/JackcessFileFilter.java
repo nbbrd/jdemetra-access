@@ -21,6 +21,7 @@ import com.healthmarketscience.jackcess.Database.FileFormat;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -44,7 +45,7 @@ public final class JackcessFileFilter implements FileFilter {
 
     @Override
     public boolean accept(File f) {
-        String path = f.getPath().toLowerCase();
+        String path = f.getPath().toLowerCase(Locale.ROOT);
         return formats.stream().anyMatch(o -> path.endsWith(o.getFileExtension()));
     }
 
