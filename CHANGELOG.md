@@ -17,6 +17,7 @@ This is a bugfix release of **jdemetra-access**.
 
 ### Changed
 
+- Minimum JDemetra+ version is now v2.2.4
 - Bump jackcess from [4.0.1 to 4.0.7](https://sourceforge.net/p/jackcess/news/)
 
 ## [2.2.3] - 2022-08-23
