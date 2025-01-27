@@ -33,6 +33,7 @@ import static ec.tss.tsproviders.utils.Params.onObsGathering;
 import static ec.tss.tsproviders.utils.Params.onString;
 import static ec.tss.tsproviders.utils.Params.onStringList;
 import java.io.File;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +77,7 @@ interface AccessFileParam extends IParam<DataSource, AccessFileBean> {
         @Override
         public AccessFileBean defaultValue() {
             AccessFileBean result = new AccessFileBean();
-            result.setFile(new File(dbName.defaultValue()));
+            result.setFile(Paths.get(dbName.defaultValue()).toFile());
             result.setTable(tableName.defaultValue());
             result.setDimColumns(dimColumns.defaultValue());
             result.setPeriodColumn(periodColumn.defaultValue());
@@ -93,7 +94,7 @@ interface AccessFileParam extends IParam<DataSource, AccessFileBean> {
         @Override
         public AccessFileBean get(DataSource dataSource) {
             AccessFileBean result = new AccessFileBean();
-            result.setFile(new File(dbName.get(dataSource)));
+            result.setFile(Paths.get(dbName.get(dataSource)).toFile());
             result.setTable(tableName.get(dataSource));
             result.setDimColumns(dimColumns.get(dataSource));
             result.setPeriodColumn(periodColumn.get(dataSource));
