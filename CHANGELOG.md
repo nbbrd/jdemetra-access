@@ -44,8 +44,6 @@ This is a feature release of **jdemetra-access**.
 - Add generation of checksum and signature on binaries
 - Add basic support of Access 2019
 
-### Fixed
-
 ### Changed
 
 - Minimum JDemetra+ version is now v2.2.3
