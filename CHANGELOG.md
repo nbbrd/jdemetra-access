@@ -95,6 +95,10 @@ This is a feature release of **jdemetra-access**.
 This is the initial release of **jdemetra-access**.  
 [JDemetra+ 2.0.0 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
+### Added
+
+- Initial release
+
 [Unreleased]: https://github.com/nbbrd/jdemetra-access/compare/v2.2.4...HEAD
 [2.2.4]: https://github.com/nbbrd/jdemetra-access/compare/v2.2.3...v2.2.4
 [2.2.3]: https://github.com/nbbrd/jdemetra-access/compare/v2.2.2...v2.2.3
