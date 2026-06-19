@@ -16,14 +16,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This is a bugfix release of **jdemetra-access**.  
 [JDemetra+ 2.2.4 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
-### Fixed
-
-- Fix potential bugs related to system settings
-
 ### Changed
 
 - Minimum JDemetra+ version is now v2.2.4
 - Bump jackcess from [4.0.1 to 4.0.7](https://sourceforge.net/p/jackcess/news/)
+
+### Fixed
+
+- Fix potential bugs related to system settings
 
 ## [2.2.3] - 2022-08-23
 
@@ -66,15 +66,15 @@ This is a feature release of **jdemetra-access**.
 This is a bugfix release of **jdemetra-access**.  
 [JDemetra+ 2.2.0 or later version](https://github.com/jdemetra/jdemetra-app/releases) is required to run it.
 
+### Changed
+
+- Minimum JDemetra+ version is now v2.2.0
+
 ### Fixed
 
 - Fix default ordering of columns in auto-completion
 - Fix ordering when querying observations
 - Fix display name of relative file.
-
-### Changed
-
-- Minimum JDemetra+ version is now v2.2.0
 
 ## [2.1.0] - 2016-10-27
 
