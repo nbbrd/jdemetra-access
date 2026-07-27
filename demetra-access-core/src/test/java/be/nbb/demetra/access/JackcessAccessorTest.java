@@ -18,26 +18,21 @@ package be.nbb.demetra.access;
 
 import com.google.common.collect.Range;
 import com.google.common.io.Resources;
-import com.healthmarketscience.jackcess.ColumnBuilder;
-import com.healthmarketscience.jackcess.DataType;
-import com.healthmarketscience.jackcess.Database;
-import com.healthmarketscience.jackcess.DatabaseBuilder;
-import com.healthmarketscience.jackcess.DateTimeType;
-import com.healthmarketscience.jackcess.RowId;
-import com.healthmarketscience.jackcess.Table;
-import com.healthmarketscience.jackcess.TableBuilder;
+import com.healthmarketscience.jackcess.*;
 import ec.tss.tsproviders.db.DbAccessor;
 import ec.tss.tsproviders.utils.DataFormat;
 import ec.tss.tsproviders.utils.Parsers;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
-
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,7 +56,8 @@ public class JackcessAccessorTest extends DbAccessorTest<JackcessBean> {
     }
 
     public static File createResource() throws IOException {
-        File result = File.createTempFile("Top5Browsers", ".mdb");
+        Path tempFile = Files.createTempFile("Top5Browsers", ".mdb");
+        File result = tempFile.toFile();
         try (Database db = new DatabaseBuilder(result).setFileFormat(Database.FileFormat.V2007).create()) {
             db.setDateTimeType(DateTimeType.DATE);
 
